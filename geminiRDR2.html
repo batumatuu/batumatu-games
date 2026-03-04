@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RED DEAD REDEMPTION 2 - Vahşi Batı</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Roboto:wght@400;700&display=swap');
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #1a0a00;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        #game-title {
+            position: absolute;
+            top: 20px;
+            width: 100%;
+            text-align: center;
+            color: #ff3300;
+            font-family: 'Cinzel', serif;
+            font-size: 4rem;
+            text-transform: uppercase;
+            letter-spacing: 10px;
+            text-shadow: 4px 4px 0px #000, 0 0 20px rgba(255, 51, 0, 0.5);
+            z-index: 10;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        #ui-layer {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            pointer-events: none;
+        }
+
+        .bar-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .bar-label {
+            color: #fff;
+            text-transform: uppercase;
+            font-weight: bold;
+            font-size: 0.9rem;
+            width: 80px;
+        }
+
+        .bar {
+            width: 250px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #555;
+            position: relative;
+        }
+
+        #health-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #ff0000, #aa0000);
+            transition: width 0.3s ease;
+        }
+
+        #ammo-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #ffcc00, #cc9900);
+            transition: width 0.3s ease;
+        }
+
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 30px;
+            height: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        #crosshair::before,
+        #crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        #crosshair::before {
+            top: 50%;
+            left: -10px;
+            right: -10px;
+            height: 1px;
+            transform: translateY(-50%);
+        }
+
+        #crosshair::after {
+            left: 50%;
+            top: -10px;
+            bottom: -10px;
+            width: 1px;
+            transform: translateX(-50%);
+        }
+
+        #hit-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 40%, rgba(255, 0, 0, 0.4) 100%);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 20;
+            transition: opacity 0.1s;
+        }
+
+        #instructions {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            color: rgba(255, 255, 255, 0.7);
+            background: rgba(0, 0, 0, 0.4);
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            z-index: 10;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game-title">Red Dead Redemption 2</div>
+
+    <div id="ui-layer">
+        <div class="bar-container">
+            <div class="bar-label">Sağlık</div>
+            <div class="bar">
+                <div id="health-fill"></div>
+            </div>
+        </div>
+        <div class="bar-container">
+            <div class="bar-label">Mermi</div>
+            <div class="bar">
+                <div id="ammo-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="instructions">
+        WASD / Ok Tuşları: Hareket | Boşluk (Space): Ateş <br>
+        E: At Bin/İn | Flare: Kamera (Pointer Lock)
+    </div>
+
+    <div id="crosshair"></div>
+    <div id="hit-overlay"></div>
+
+    <audio id="bg-music" loop>
+        <source src="https://vignette.wikia.nocookie.net/leagueoflegends/images/1/1d/High_Noon_2018_Login_Theme.ogg"
+            type="audio/ogg">
+        <source src="https://www.fesliyanstudios.com/play-mp3/344" type="audio/mpeg">
+    </audio>
+    <audio id="gunshot-sound">
+        <source src="https://raw.githubusercontent.com/polyfloyd/arcade-game/master/assets/sounds/shoot.mp3"
+            type="audio/mpeg">
+    </audio>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // --- Game Setup ---
+        const config = {
+            playerSpeed: 0.15,
+            horseSpeed: 0.3,
+            maxHealth: 200, // Daha yavaş ölmek için sağlık artırıldı
+            maxAmmo: 6,
+            enemySpawnRate: 0.005,
+            bulletSpeed: 1,
+            sensitivity: 0.002,
+            fov: 85
+        };
+
+        const state = {
+            health: config.maxHealth,
+            ammo: config.maxAmmo,
+            onHorse: false,
+            score: 0,
+            reloading: false,
+            musicStarted: false
+        };
+
+        // --- Three.js Setup ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xff8833);
+        scene.fog = new THREE.FogExp2(0xff8833, 0.05);
+
+        const camera = new THREE.PerspectiveCamera(config.fov, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        // --- Lighting ---
+        const ambientLight = new THREE.AmbientLight(0xffaa66, 0.5);
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xff4400, 1.5);
+        sunLight.position.set(50, 20, 50);
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 1024;
+        sunLight.shadow.mapSize.height = 1024;
+        scene.add(sunLight);
+
+        // --- Ground & Atmosphere ---
+        const floorGeo = new THREE.PlaneGeometry(1000, 1000);
+        const floorMat = new THREE.MeshStandardMaterial({
+            color: 0xd4a373,
+            roughness: 1
+        });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        // Add some desert hills (simple bumps)
+        for (let i = 0; i < 50; i++) {
+            const hillGeo = new THREE.ConeGeometry(5 + Math.random() * 10, 2 + Math.random() * 5, 4);
+            const hill = new THREE.Mesh(hillGeo, floorMat);
+            hill.position.set(
+                (Math.random() - 0.5) * 500,
+                0,
+                (Math.random() - 0.5) * 500
+            );
+            hill.rotation.y = Math.random() * Math.PI;
+            hill.receiveShadow = true;
+            hill.castShadow = true;
+            scene.add(hill);
+        }
+
+        // Cacti
+        function createCactus(x, z) {
+            const cactus = new THREE.Group();
+            const trunkGeo = new THREE.CylinderGeometry(0.2, 0.2, 2, 8);
+            const cactusMat = new THREE.MeshStandardMaterial({ color: 0x2d5a27 });
+            const trunk = new THREE.Mesh(trunkGeo, cactusMat);
+            trunk.position.y = 1;
+            cactus.add(trunk);
+
+            const arm1 = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.8, 8), cactusMat);
+            arm1.position.set(0.3, 1.2, 0);
+            arm1.rotation.z = Math.PI / 3;
+            cactus.add(arm1);
+
+            const arm2 = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.8, 8), cactusMat);
+            arm2.position.set(-0.3, 0.8, 0);
+            arm2.rotation.z = -Math.PI / 3;
+            cactus.add(arm2);
+
+            cactus.position.set(x, 0, z);
+            cactus.traverse(o => { if (o.isMesh) o.castShadow = true; });
+            scene.add(cactus);
+        }
+
+        for (let i = 0; i < 100; i++) {
+            createCactus((Math.random() - 0.5) * 400, (Math.random() - 0.5) * 400);
+        }
+
+        // --- Player (Arthur) ---
+        const player = new THREE.Group();
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
+        head.position.y = 1.7;
+        player.add(head);
+
+        const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 0.1, 16), new THREE.MeshStandardMaterial({ color: 0x3d2b1f }));
+        hat.position.y = 1.95;
+        player.add(hat);
+
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.4), new THREE.MeshStandardMaterial({ color: 0x223344 }));
+        body.position.y = 1.1;
+        player.add(body);
+
+        const legs = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.3), new THREE.MeshStandardMaterial({ color: 0x1a1a1a }));
+        legs.position.y = 0.35;
+        player.add(legs);
+
+        player.position.y = 0;
+        scene.add(player);
+
+        // --- Horse ---
+        const horse = new THREE.Group();
+        const horseBody = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.8, 2), new THREE.MeshStandardMaterial({ color: 0x4e2714 }));
+        horseBody.position.y = 0.8;
+        horse.add(horseBody);
+
+        const horseHead = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.6, 0.8), new THREE.MeshStandardMaterial({ color: 0x4e2714 }));
+        horseHead.position.set(0, 1.4, 1.1);
+        horseHead.rotation.x = -0.3;
+        horse.add(horseHead);
+
+        const horseLegs = [];
+        for (let i = 0; i < 4; i++) {
+            const leg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.8, 0.2), new THREE.MeshStandardMaterial({ color: 0x2e170a }));
+            leg.position.set(
+                (i % 2 === 0 ? 0.3 : -0.3),
+                0.4,
+                (i < 2 ? 0.8 : -0.8)
+            );
+            horse.add(leg);
+            horseLegs.push(leg);
+        }
+
+        horse.position.set(5, 0, 5);
+        scene.add(horse);
+
+        // --- Enemies (O'Donnel Gang) ---
+        const enemies = [];
+        function spawnEnemy() {
+            const enemy = new THREE.Group();
+            const eHead = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
+            eHead.position.y = 1.7;
+            enemy.add(eHead);
+
+            const eHat = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 0.1, 16), new THREE.MeshStandardMaterial({ color: 0x000000 }));
+            eHat.position.y = 1.95;
+            enemy.add(eHat);
+
+            const eBody = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.8, 0.4), new THREE.MeshStandardMaterial({ color: 0x222222 }));
+            eBody.position.y = 1.1;
+            enemy.add(eBody);
+
+            const eLegs = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.3), new THREE.MeshStandardMaterial({ color: 0x111111 }));
+            eLegs.position.y = 0.35;
+            enemy.add(eLegs);
+
+            // Random position away from player
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 30 + Math.random() * 20;
+            enemy.position.set(
+                player.position.x + Math.cos(angle) * dist,
+                0,
+                player.position.z + Math.sin(angle) * dist
+            );
+
+            enemy.userData = { health: 2, shootCooldown: 50 + Math.random() * 50 };
+            scene.add(enemy);
+            enemies.push(enemy);
+        }
+
+        // --- Bullets ---
+        const bullets = [];
+        function fireBullet(from, dir, isPlayer) {
+            const bGeo = new THREE.SphereGeometry(0.1, 8, 8);
+            const bMat = new THREE.MeshBasicMaterial({ color: isPlayer ? 0xffff00 : 0xff4400 });
+            const bullet = new THREE.Mesh(bGeo, bMat);
+            bullet.position.copy(from);
+            bullet.position.y += 1.3;
+            bullet.userData = { velocity: dir.clone().multiplyScalar(config.bulletSpeed), life: 100, isPlayer };
+            scene.add(bullet);
+            bullets.push(bullet);
+        }
+
+        // --- Inputs ---
+        const keys = {};
+        window.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            if (e.code === 'KeyR') reload();
+            if (e.code === 'KeyE') toggleHorse();
+        });
+        window.addEventListener('keyup', (e) => keys[e.code] = false);
+
+        // Click to shoot
+        window.addEventListener('mousedown', (e) => {
+            if (document.pointerLockElement === renderer.domElement) {
+                shoot();
+            }
+        });
+
+        // Pointer Lock for camera and start music
+        document.body.addEventListener('click', () => {
+            renderer.domElement.requestPointerLock();
+            const music = document.getElementById('bg-music');
+            if (!state.musicStarted) {
+                music.volume = 0.5;
+                music.play().then(() => {
+                    state.musicStarted = true;
+                }).catch(e => console.log("Müzik çalınamadı:", e));
+            }
+        });
+
+        let targetYaw = 0;
+        let targetPitch = 0;
+        let currentYaw = 0;
+        let currentPitch = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            if (document.pointerLockElement === renderer.domElement) {
+                targetYaw -= e.movementX * config.sensitivity;
+                targetPitch -= e.movementY * config.sensitivity;
+                targetPitch = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, targetPitch));
+            }
+        });
+
+        function shoot() {
+            if (state.ammo > 0 && !state.reloading) {
+                const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+                fireBullet(player.position, dir, true);
+                state.ammo--;
+                updateBars();
+
+                // Sound
+                const gunshot = document.getElementById('gunshot-sound');
+                gunshot.currentTime = 0;
+                gunshot.play().catch(e => { });
+
+                // Effects
+                muzzleFlash();
+                screenShake();
+                targetPitch += 0.05; // Recoil: Camera kicks up
+
+                if (state.ammo <= 0) reload();
+            }
+        }
+
+        const flashLight = new THREE.PointLight(0xffaa00, 0, 10);
+        scene.add(flashLight);
+
+        function muzzleFlash() {
+            flashLight.intensity = 2;
+            flashLight.position.copy(player.position).add(new THREE.Vector3(0, 1.5, 0));
+            setTimeout(() => { flashLight.intensity = 0; }, 50);
+        }
+
+        let shakeOffset = new THREE.Vector3();
+        function screenShake() {
+            const shakeAmount = 0.15;
+            shakeOffset.set(
+                (Math.random() - 0.5) * shakeAmount,
+                (Math.random() - 0.5) * shakeAmount,
+                (Math.random() - 0.5) * shakeAmount
+            );
+            setTimeout(() => { shakeOffset.set(0, 0, 0); }, 100);
+        }
+
+        function reload() {
+            state.reloading = true;
+            setTimeout(() => {
+                state.ammo = config.maxAmmo;
+                state.reloading = false;
+                updateBars();
+            }, 1500);
+        }
+
+        function toggleHorse() {
+            const dist = player.position.distanceTo(horse.position);
+            if (!state.onHorse) {
+                if (dist < 3) state.onHorse = true;
+            } else {
+                state.onHorse = false;
+            }
+        }
+
+        function updateBars() {
+            document.getElementById('health-fill').style.width = (state.health / config.maxHealth * 100) + '%';
+            document.getElementById('ammo-fill').style.width = (state.ammo / config.maxAmmo * 100) + '%';
+        }
+
+        function hitPlayer() {
+            state.health -= 5; // Hasar 10'dan 5'e düşürüldü (daha yavaş ölmek için)
+            const overlay = document.getElementById('hit-overlay');
+            overlay.style.opacity = '1';
+            setTimeout(() => { overlay.style.opacity = '0'; }, 100);
+            updateBars();
+            if (state.health <= 0) {
+                alert('Terkedildin... Skorun: ' + state.score);
+                location.reload();
+            }
+        }
+
+        // --- Main Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Smoothing mouse look
+            currentYaw = THREE.MathUtils.lerp(currentYaw, targetYaw, 0.15);
+            currentPitch = THREE.MathUtils.lerp(currentPitch, targetPitch, 0.15);
+
+            // Camera follow (Over-the-shoulder perspective)
+            player.rotation.y = currentYaw;
+
+            // Better FOV and Offset: Character is slightly to the left, camera looking past his right shoulder
+            const shoulderOffset = new THREE.Vector3(0.8, 2.2, 4.5);
+            shoulderOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), currentYaw);
+
+            const targetCamPos = player.position.clone().add(shoulderOffset);
+            camera.position.lerp(targetCamPos, 0.1); // Smooth camera position follow
+
+            camera.rotation.set(currentPitch, currentYaw, 0, 'YXZ');
+
+            // Movement
+            const moveDir = new THREE.Vector3();
+            if (keys['KeyW'] || keys['ArrowUp']) moveDir.z -= 1;
+            if (keys['KeyS'] || keys['ArrowDown']) moveDir.z += 1;
+            if (keys['KeyA'] || keys['ArrowLeft']) moveDir.x -= 1;
+            if (keys['KeyD'] || keys['ArrowRight']) moveDir.x += 1;
+
+            if (moveDir.length() > 0) {
+                moveDir.normalize();
+                moveDir.applyAxisAngle(new THREE.Vector3(0, 1, 0), currentYaw);
+                const speed = state.onHorse ? config.horseSpeed : config.playerSpeed;
+                player.position.add(moveDir.multiplyScalar(speed));
+            }
+
+            if (state.onHorse) {
+                horse.position.copy(player.position);
+                horse.rotation.y = player.rotation.y;
+                // Simple animation
+                if (moveDir.length() > 0) {
+                    const t = Date.now() * 0.01;
+                    horseLegs.forEach((l, i) => l.rotation.x = Math.sin(t + (i % 2 === 0 ? 0 : Math.PI)) * 0.5);
+                }
+            } else {
+                // Return legs to neutral
+                horseLegs.forEach(l => l.rotation.x = 0);
+            }
+
+            // Spawn Enemies
+            if (Math.random() < config.enemySpawnRate) spawnEnemy();
+
+            // Update Enemies
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const e = enemies[i];
+                e.lookAt(player.position.x, 0, player.position.z);
+
+                const dist = e.position.distanceTo(player.position);
+                if (dist > 5) {
+                    const dir = player.position.clone().sub(e.position).normalize();
+                    e.position.add(dir.multiplyScalar(0.05));
+                }
+
+                e.userData.shootCooldown--;
+                if (e.userData.shootCooldown <= 0 && dist < 15) {
+                    const dir = player.position.clone().sub(e.position).normalize();
+                    fireBullet(e.position, dir, false);
+                    e.userData.shootCooldown = 100 + Math.random() * 50;
+                }
+            }
+
+            // Update Bullets
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const b = bullets[i];
+                b.position.add(b.userData.velocity);
+                b.userData.life--;
+
+                if (b.userData.isPlayer) {
+                    enemies.forEach((e, ei) => {
+                        if (b.position.distanceTo(e.position.clone().add(new THREE.Vector3(0, 1, 0))) < 1) {
+                            scene.remove(e);
+                            enemies.splice(ei, 1);
+                            b.userData.life = 0;
+                            state.score += 10;
+                        }
+                    });
+                } else {
+                    if (b.position.distanceTo(player.position.clone().add(new THREE.Vector3(0, 1, 0))) < 0.8) {
+                        hitPlayer();
+                        b.userData.life = 0;
+                    }
+                }
+
+                if (b.userData.life <= 0) {
+                    scene.remove(b);
+                    bullets.splice(i, 1);
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+
+</html>
