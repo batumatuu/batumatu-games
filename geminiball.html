@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kafa Topu AI - Pro Edition (Fix)</title>
+    <style>
+        /* CSS STİLLERİ */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #2c3e50;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none; 
+            user-select: none;
+        }
+
+        #gameCanvas {
+            display: block;
+            margin: 0 auto;
+            background: linear-gradient(to bottom, #2980b9 0%, #6dd5fa 50%, #27ae60 50%, #2ecc71 100%);
+        }
+
+        /* ARAYÜZ KATMANLARI */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* SKOR TABLOSU */
+        #scoreboard {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-top: 20px;
+            color: white;
+            text-shadow: 2px 2px 4px #000;
+            font-size: 32px;
+            font-weight: 800;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .score-box {
+            background: rgba(0,0,0,0.6);
+            padding: 5px 25px;
+            border-radius: 10px;
+            margin: 0 15px;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+
+        #timer {
+            background: #e67e22;
+            color: #fff;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            border: 4px solid #fff;
+            box-shadow: 0 4px 0 #d35400;
+        }
+
+        /* EKRANLAR */
+        #intro-screen, #game-over-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 10;
+            pointer-events: auto;
+        }
+
+        h1 { font-size: 48px; margin-bottom: 10px; text-transform: uppercase; color: #f1c40f; text-shadow: 0 5px 0 #d35400; letter-spacing: 2px; }
+        p { font-size: 20px; color: #ecf0f1; margin-bottom: 30px; }
+        
+        .btn {
+            padding: 15px 50px;
+            font-size: 24px;
+            font-weight: bold;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #c0392b;
+            transition: all 0.1s;
+        }
+        .btn:active { transform: translateY(6px); box-shadow: none; }
+
+        /* MOBİL KONTROLLER */
+        #mobile-controls {
+            display: none;
+            width: 100%;
+            height: 160px;
+            position: absolute;
+            bottom: 20px;
+            pointer-events: auto;
+            justify-content: space-between;
+            padding: 0 30px;
+            box-sizing: border-box;
+        }
+
+        .control-group { display: flex; gap: 25px; align-items: flex-end; }
+        
+        .touch-btn {
+            width: 75px;
+            height: 75px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            color: white;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .touch-btn:active { background: rgba(255, 255, 255, 0.5); transform: scale(0.95); }
+        #btn-shoot { background: rgba(231, 76, 60, 0.4); border-color: #e74c3c; } 
+
+        @media (max-width: 768px) {
+            h1 { font-size: 32px; }
+            #scoreboard { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui-layer">
+        <div id="scoreboard">
+            <div class="score-box" style="border-bottom: 4px solid #e74c3c" id="p1-score">0</div>
+            <div id="timer">60</div>
+            <div class="score-box" style="border-bottom: 4px solid #3498db" id="p2-score">0</div>
+        </div>
+
+        <div id="mobile-controls">
+            <div class="control-group">
+                <div class="touch-btn" id="btn-left">◀</div>
+                <div class="touch-btn" id="btn-right">▶</div>
+            </div>
+            <div class="control-group">
+                <div class="touch-btn" id="btn-jump">▲</div>
+                <div class="touch-btn" id="btn-shoot">👟</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="intro-screen">
+        <h1>Kafa Topu Pro</h1>
+        <p>A-D: Hareket | W: Zıpla | SPACE: Şut Çek</p>
+        <button class="btn" onclick="startGame()">MAÇA BAŞLA</button>
+    </div>
+
+    <div id="game-over-screen" style="display: none;">
+        <h1 id="winner-text">OYUN BİTTİ</h1>
+        <button class="btn" onclick="resetGame()">TEKRAR OYNA</button>
+    </div>
+
+    <script>
+        // --- AYARLAR VE SABİTLER ---
+        const CANVAS = document.getElementById('gameCanvas');
+        const CTX = CANVAS.getContext('2d');
+        
+        // FİZİK AYARLARI
+        const GRAVITY = 0.5;
+        const FRICTION = 0.88;
+        const GROUND_Y_OFFSET = 120;
+        let GROUND_Y;
+        const GAME_DURATION = 90;
+
+        // --- SES MOTORU ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'kick') { // Sert şut
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(100, now);
+                osc.frequency.exponentialRampToValueAtTime(10, now + 0.15);
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.15);
+                osc.start(now);
+                osc.stop(now + 0.15);
+            } else if (type === 'bump') { // Kafa/Vücut
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(80, now);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'jump') { // Zıplama (Eklendi)
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(400, now + 0.1);
+                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'goal') { // Gol
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.linearRampToValueAtTime(800, now + 0.5);
+                gainNode.gain.setValueAtTime(0.4, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 1.5);
+                osc.start(now);
+                osc.stop(now + 1.5);
+            }
+        }
+
+        // --- SINIFLAR ---
+
+        class Particle {
+            constructor(x, y, color, speed) {
+                this.x = x; this.y = y; this.color = color;
+                this.vx = (Math.random() - 0.5) * speed;
+                this.vy = (Math.random() - 0.5) * speed;
+                this.life = 1.0;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                this.life -= 0.04;
+            }
+            draw() {
+                CTX.globalAlpha = this.life;
+                CTX.fillStyle = this.color;
+                CTX.beginPath();
+                CTX.arc(this.x, this.y, 4, 0, Math.PI*2);
+                CTX.fill();
+                CTX.globalAlpha = 1.0;
+            }
+        }
+
+        class Player {
+            constructor(x, isAI, color, side) {
+                this.x = x; this.y = 0;
+                this.vx = 0; this.vy = 0;
+                this.radius = 35; 
+                this.width = 40; this.height = 60;
+                this.color = color;
+                this.isAI = isAI;
+                this.side = side; 
+                this.speed = 5.0; 
+                this.jumpPower = -12.5; 
+                this.grounded = false;
+                
+                // Tekme Değişkenleri
+                this.isKicking = false;
+                this.kickAngle = 0;
+            }
+
+            update(ball) {
+                this.vy += GRAVITY;
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Zemin
+                if (this.y + this.height/2 > GROUND_Y) {
+                    this.y = GROUND_Y - this.height/2;
+                    this.vy = 0;
+                    this.grounded = true;
+                } else {
+                    this.grounded = false;
+                }
+
+                // Duvarlar
+                if (this.x < 35) this.x = 35;
+                if (this.x > CANVAS.width - 35) this.x = CANVAS.width - 35;
+
+                // Sürtünme
+                this.vx *= FRICTION;
+
+                // Tekme Animasyonu
+                if (this.isKicking) {
+                    this.kickAngle += 0.4; 
+                    if (this.kickAngle > 1.5) { 
+                        this.isKicking = false; 
+                    }
+                } else {
+                    if (this.kickAngle > 0) this.kickAngle -= 0.15;
+                    if (this.kickAngle < 0) this.kickAngle = 0;
+                }
+
+                if (this.isAI) this.aiLogic(ball);
+            }
+
+            // --- DÜZELTİLEN KISIM: jump() FONKSİYONU EKLENDİ ---
+            jump() {
+                if (this.grounded) {
+                    this.vy = this.jumpPower;
+                    playSound('jump');
+                }
+            }
+            // ---------------------------------------------------
+
+            kick() {
+                if (!this.isKicking && this.kickAngle < 0.1) {
+                    this.isKicking = true;
+                }
+            }
+
+            aiLogic(ball) {
+                const distX = ball.x - this.x;
+                const distY = ball.y - this.y;
+                
+                // Takip et
+                if (Math.abs(distX) > 25) {
+                    if (distX > 0) this.vx = this.speed * 0.6;
+                    else this.vx = -this.speed * 0.6;
+                }
+
+                // Zıpla
+                if (ball.y < this.y - 60 && Math.abs(distX) < 80 && this.grounded) {
+                    this.jump(); // Artık jump() fonksiyonunu kullanıyor
+                }
+
+                // Şut Çek
+                let facingBall = (this.side === 1 && distX > 0) || (this.side === -1 && distX < 0);
+                if (facingBall && Math.abs(distX) < 70 && Math.abs(distY) < 60) {
+                    if (Math.random() < 0.05) this.kick();
+                }
+            }
+
+            draw() {
+                CTX.save();
+                CTX.translate(this.x, this.y);
+                if (this.side === -1) CTX.scale(-1, 1);
+
+                // Vücut
+                CTX.fillStyle = this.color;
+                CTX.fillRect(-18, 10, 36, 45);
+
+                // Ayak (Şut)
+                CTX.save();
+                CTX.translate(10, 50);
+                CTX.rotate(-this.kickAngle);
+                
+                CTX.fillStyle = '#2c3e50';
+                CTX.beginPath();
+                CTX.ellipse(5, 5, 14, 7, 0, 0, Math.PI*2);
+                CTX.fill();
+                CTX.fillStyle = '#fff';
+                CTX.fillRect(0, 10, 4, 4);
+                CTX.fillRect(10, 10, 4, 4);
+                CTX.restore();
+
+                // Arka Ayak
+                CTX.fillStyle = '#2c3e50';
+                CTX.beginPath();
+                CTX.ellipse(-12, 55, 12, 6, 0, 0, Math.PI*2);
+                CTX.fill();
+
+                // Kafa
+                CTX.fillStyle = '#f1c27d';
+                CTX.beginPath();
+                CTX.arc(0, -15, this.radius, 0, Math.PI * 2);
+                CTX.fill();
+
+                // Göz
+                CTX.fillStyle = '#fff';
+                CTX.beginPath();
+                CTX.arc(14, -15, 11, 0, Math.PI * 2);
+                CTX.fill();
+                CTX.fillStyle = '#000';
+                CTX.beginPath();
+                CTX.arc(18, -15, 4, 0, Math.PI * 2);
+                CTX.fill();
+
+                // Bandana
+                CTX.fillStyle = this.color;
+                CTX.beginPath();
+                CTX.arc(0, -20, this.radius + 1, Math.PI, Math.PI * 2);
+                CTX.fill();
+
+                CTX.restore();
+            }
+        }
+
+        class Ball {
+            constructor() {
+                this.r = 17;
+                this.reset();
+            }
+            reset() {
+                this.x = CANVAS.width / 2;
+                this.y = 200;
+                this.vx = 0; this.vy = 5;
+                this.rotation = 0;
+            }
+            update() {
+                this.vy += GRAVITY;
+                
+                const maxSpeed = 18;
+                if (this.vx > maxSpeed) this.vx = maxSpeed;
+                if (this.vx < -maxSpeed) this.vx = -maxSpeed;
+                if (this.vy > maxSpeed) this.vy = maxSpeed;
+
+                this.x += this.vx;
+                this.y += this.vy;
+                this.rotation += this.vx * 0.1;
+
+                if (this.y + this.r > GROUND_Y) {
+                    this.y = GROUND_Y - this.r;
+                    this.vy *= -0.75;
+                }
+                if (this.y - this.r < 0) {
+                    this.y = this.r; this.vy *= -0.6;
+                }
+                if (this.x - this.r < 0) { this.x = this.r; this.vx *= -0.8; }
+                if (this.x + this.r > CANVAS.width) { this.x = CANVAS.width - this.r; this.vx *= -0.8; }
+                
+                this.vx *= 0.99;
+            }
+            draw() {
+                CTX.save();
+                CTX.translate(this.x, this.y);
+                CTX.rotate(this.rotation);
+                CTX.fillStyle = '#fff';
+                CTX.beginPath(); CTX.arc(0,0,this.r,0,Math.PI*2); CTX.fill();
+                CTX.strokeStyle = '#000'; CTX.lineWidth = 2; CTX.stroke();
+                CTX.fillStyle = '#000';
+                for(let i=0; i<5; i++) {
+                    CTX.beginPath();
+                    CTX.arc(10*Math.cos(i*2*Math.PI/5), 10*Math.sin(i*2*Math.PI/5), 5, 0, Math.PI*2);
+                    CTX.fill();
+                }
+                CTX.restore();
+            }
+        }
+
+        // --- GLOBAL DEĞİŞKENLER ---
+        let player1, player2, ball;
+        let particles = [];
+        let score1 = 0, score2 = 0;
+        let timeLeft = GAME_DURATION;
+        let timerInterval;
+        let screenShake = 0;
+        let isGameRunning = false;
+        const keys = { a: false, d: false, w: false, space: false };
+
+        function init() {
+            CANVAS.width = window.innerWidth;
+            CANVAS.height = window.innerHeight;
+            GROUND_Y = CANVAS.height - GROUND_Y_OFFSET;
+
+            player1 = new Player(200, false, '#e74c3c', 1);
+            player2 = new Player(CANVAS.width - 200, true, '#3498db', -1);
+            ball = new Ball();
+
+            if ('ontouchstart' in window) {
+                document.getElementById('mobile-controls').style.display = 'flex';
+            }
+        }
+
+        function checkCollisions() {
+            [player1, player2].forEach(p => {
+                let dx = ball.x - p.x;
+                let dy = ball.y - (p.y - 15); 
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                
+                let kickRangeX = 60;
+                let kickRangeY = 60;
+                let inKickRange = false;
+
+                if (p.side === 1 && ball.x > p.x && ball.x < p.x + kickRangeX) inKickRange = true;
+                if (p.side === -1 && ball.x < p.x && ball.x > p.x - kickRangeX) inKickRange = true;
+                
+                if (Math.abs(ball.y - (p.y + 40)) < kickRangeY && inKickRange) {
+                    if (p.isKicking) {
+                        // SERT ŞUT
+                        let shootAngle = -Math.PI / 4;
+                        if (p.side === -1) shootAngle = -Math.PI * 0.75;
+
+                        let power = 22; 
+                        ball.vx = Math.cos(shootAngle) * power;
+                        ball.vy = Math.sin(shootAngle) * power;
+                        
+                        playSound('kick');
+                        spawnParticles(ball.x, ball.y, '#fff', 15);
+                        screenShake = 10;
+                        p.isKicking = false; 
+                        return; 
+                    }
+                }
+
+                if (dist < ball.r + p.radius) {
+                    let angle = Math.atan2(dy, dx);
+                    let force = 8; 
+                    
+                    ball.vx = Math.cos(angle) * force;
+                    ball.vy = Math.sin(angle) * force;
+                    
+                    let overlap = (ball.r + p.radius) - dist;
+                    ball.x += Math.cos(angle) * overlap;
+                    ball.y += Math.sin(angle) * overlap;
+                    
+                    playSound('bump');
+                }
+            });
+        }
+
+        function spawnParticles(x, y, color, speed) {
+            for(let i=0; i<8; i++) particles.push(new Particle(x, y, color, speed));
+        }
+
+        function drawGoal(ctx, x, isLeft) {
+            const width = 80;
+            const height = 180;
+            const topY = GROUND_Y - height;
+            
+            ctx.save();
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+            ctx.lineWidth = 6;
+            ctx.lineCap = "round";
+
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+            ctx.lineWidth = 2;
+            let step = 15;
+            for(let i=0; i<=width; i+=step) {
+                let currentX = isLeft ? x - i : x + i;
+                ctx.moveTo(currentX, topY);
+                ctx.lineTo(isLeft ? x : x, GROUND_Y);
+            }
+            for(let j=0; j<=height; j+=step) {
+                ctx.moveTo(x, topY + j);
+                ctx.lineTo(isLeft ? x - width : x + width, topY + j + (step));
+            }
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.strokeStyle = "#fff";
+            ctx.lineWidth = 6;
+            
+            if (isLeft) {
+                ctx.moveTo(x, topY); ctx.lineTo(x - width/2, topY);
+                ctx.moveTo(x, topY); ctx.lineTo(x, GROUND_Y);
+            } else {
+                ctx.moveTo(x, topY); ctx.lineTo(x + width/2, topY);
+                ctx.moveTo(x, topY); ctx.lineTo(x, GROUND_Y);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawBackground() {
+            CTX.fillStyle = '#27ae60';
+            CTX.fillRect(0, GROUND_Y, CANVAS.width, CANVAS.height - GROUND_Y);
+            CTX.fillStyle = '#2ecc71';
+            CTX.fillRect(0, GROUND_Y, CANVAS.width, 10);
+            drawGoal(CTX, 40, true);
+            drawGoal(CTX, CANVAS.width - 40, false);
+        }
+
+        function checkGoal() {
+            if (ball.x < 30 && ball.y > GROUND_Y - 180) {
+                score2++; handleGoal();
+            } else if (ball.x > CANVAS.width - 30 && ball.y > GROUND_Y - 180) {
+                score1++; handleGoal();
+            }
+        }
+
+        function handleGoal() {
+            screenShake = 25;
+            playSound('goal');
+            updateScoreboard();
+            ball.reset();
+            ball.vy = 0; ball.vx = 0; ball.y = 200;
+        }
+
+        function updateScoreboard() {
+            document.getElementById('p1-score').innerText = score1;
+            document.getElementById('p2-score').innerText = score2;
+        }
+
+        function gameLoop() {
+            if (!isGameRunning) return;
+
+            CTX.clearRect(0, 0, CANVAS.width, CANVAS.height);
+
+            if (screenShake > 0) {
+                CTX.save();
+                CTX.translate((Math.random()-0.5)*screenShake, (Math.random()-0.5)*screenShake);
+                screenShake *= 0.9;
+                if(screenShake<1) screenShake=0;
+            }
+
+            drawBackground();
+
+            // KONTROLLER
+            if (keys.a) player1.vx -= 1;
+            if (keys.d) player1.vx += 1;
+            
+            if (player1.vx > player1.speed) player1.vx = player1.speed;
+            if (player1.vx < -player1.speed) player1.vx = -player1.speed;
+
+            if (keys.w) player1.jump(); // ARTIK ÇALIŞACAK
+            if (keys.space) player1.kick();
+
+            player1.update(ball);
+            player2.update(ball);
+            ball.update();
+            checkCollisions();
+            checkGoal();
+
+            player1.draw();
+            player2.draw();
+            ball.draw();
+
+            particles.forEach((p, i) => {
+                p.update(); p.draw();
+                if(p.life<=0) particles.splice(i,1);
+            });
+
+            if (screenShake > 0 || particles.length > 0) CTX.restore();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function startGame() {
+            document.getElementById('intro-screen').style.display = 'none';
+            document.getElementById('game-over-screen').style.display = 'none';
+            init();
+            score1 = 0; score2 = 0;
+            timeLeft = GAME_DURATION;
+            updateScoreboard();
+            isGameRunning = true;
+            gameLoop();
+            
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').innerText = timeLeft;
+                if (timeLeft <= 0) endGame();
+            }, 1000);
+        }
+
+        function endGame() {
+            isGameRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('game-over-screen').style.display = 'flex';
+            let msg = score1 > score2 ? "KAZANDIN! 🏆" : (score2 > score1 ? "KAYBETTİN 🤖" : "BERABERE! 🤝");
+            document.getElementById('winner-text').innerText = msg;
+        }
+
+        function resetGame() { startGame(); }
+
+        window.addEventListener('keydown', e => {
+            if(e.key==='a'||e.key==='A'||e.key==='ArrowLeft') keys.a=true;
+            if(e.key==='d'||e.key==='D'||e.key==='ArrowRight') keys.d=true;
+            if(e.key==='w'||e.key==='W'||e.key==='ArrowUp') keys.w=true;
+            if(e.key===' ') keys.space=true;
+        });
+        window.addEventListener('keyup', e => {
+            if(e.key==='a'||e.key==='A'||e.key==='ArrowLeft') keys.a=false;
+            if(e.key==='d'||e.key==='D'||e.key==='ArrowRight') keys.d=false;
+            if(e.key==='w'||e.key==='W'||e.key==='ArrowUp') keys.w=false;
+            if(e.key===' ') keys.space=false;
+        });
+
+        const touchMap = { 'btn-left':'a', 'btn-right':'d', 'btn-jump':'w', 'btn-shoot':'space' };
+        Object.keys(touchMap).forEach(id => {
+            const btn = document.getElementById(id);
+            const key = touchMap[id];
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key]=true; btn.style.transform='scale(0.9)'; });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[key]=false; btn.style.transform='scale(1)'; });
+        });
+
+        init();
+    </script>
+</body>
+</html>
