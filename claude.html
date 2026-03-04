@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Hayatta Kalma - Hardcore</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Russo+One&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden;
+            background: #000;
+        }
+        
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+        
+        .crosshair {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
+        }
+        
+        .crosshair::before {
+            width: 2px;
+            height: 16px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .crosshair::after {
+            width: 16px;
+            height: 2px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .stats-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 3px solid rgba(255, 50, 50, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            min-width: 280px;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
+        }
+        
+        .stat-bar {
+            margin-bottom: 14px;
+        }
+        
+        .stat-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .bar-container {
+            width: 100%;
+            height: 22px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .bar-fill {
+            height: 100%;
+            transition: width 0.3s ease, background 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shine 2s infinite;
+        }
+        
+        @keyframes shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .health-bar { background: linear-gradient(90deg, #ff0040, #ff4466); }
+        .hunger-bar { background: linear-gradient(90deg, #ff8800, #ffaa00); }
+        .thirst-bar { background: linear-gradient(90deg, #00aaff, #44ccff); }
+        .toilet-bar { background: linear-gradient(90deg, #aa00ff, #cc44ff); }
+        .stamina-bar { background: linear-gradient(90deg, #ffff00, #ffff88); }
+        
+        .time-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 3px solid rgba(255, 50, 50, 0.7);
+            border-radius: 10px;
+            padding: 20px 30px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
+        }
+        
+        .day-counter {
+            font-family: 'Russo One', sans-serif;
+            font-size: 32px;
+            color: #ff3344;
+            text-shadow: 0 0 15px rgba(255, 50, 50, 0.9);
+            margin-bottom: 10px;
+        }
+        
+        .time-of-day {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+            text-transform: uppercase;
+        }
+        
+        .time-of-day.night {
+            color: #8888ff;
+            text-shadow: 0 0 10px rgba(100, 100, 255, 0.8);
+        }
+        
+        .inventory-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            border: 3px solid rgba(255, 50, 50, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
+        }
+        
+        .inventory-title {
+            font-family: 'Russo One', sans-serif;
+            font-size: 16px;
+            color: #ff3344;
+            margin-bottom: 10px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+        }
+        
+        .inventory-slot {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 50, 50, 0.5);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            font-size: 13px;
+            color: #fff;
+            min-height: 70px;
+            min-width: 70px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .inventory-slot:hover {
+            background: rgba(255, 50, 50, 0.3);
+            border-color: #ff3344;
+            transform: scale(1.08);
+        }
+        
+        .inventory-slot.empty {
+            opacity: 0.3;
+        }
+        
+        .item-icon {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        
+        .item-count {
+            font-size: 11px;
+            color: #ff3344;
+            font-weight: 700;
+        }
+        
+        .interaction-prompt {
+            position: absolute;
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95);
+            border: 3px solid #ff3344;
+            border-radius: 8px;
+            padding: 15px 30px;
+            font-size: 18px;
+            color: #fff;
+            font-weight: 700;
+            display: none;
+            animation: pulse 1.5s infinite;
+            box-shadow: 0 0 20px rgba(255, 50, 50, 0.6);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+        }
+        
+        .controls-help {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 3px solid rgba(255, 50, 50, 0.7);
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 13px;
+            color: #fff;
+            line-height: 1.8;
+        }
+        
+        .controls-help div {
+            margin-bottom: 5px;
+        }
+        
+        .key {
+            display: inline-block;
+            background: rgba(255, 50, 50, 0.3);
+            border: 2px solid #ff3344;
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-family: 'Russo One', sans-serif;
+            font-size: 11px;
+            color: #ff3344;
+            min-width: 28px;
+            text-align: center;
+        }
+        
+        .message-log {
+            position: absolute;
+            top: 200px;
+            left: 20px;
+            max-width: 400px;
+            pointer-events: none;
+        }
+        
+        .message {
+            background: rgba(0, 0, 0, 0.95);
+            border-left: 4px solid #ff3344;
+            padding: 12px 18px;
+            margin-bottom: 10px;
+            font-size: 15px;
+            color: #fff;
+            border-radius: 5px;
+            animation: slideIn 0.4s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+            font-weight: 600;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .message.danger { border-left-color: #ff0040; color: #ffccdd; }
+        .message.warning { border-left-color: #ffaa00; color: #ffeecc; }
+        .message.success { border-left-color: #00ff64; color: #ccffdd; }
+        .message.info { border-left-color: #00aaff; color: #ccddff; }
+        
+        .death-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.98);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            pointer-events: auto;
+        }
+        
+        .death-content {
+            text-align: center;
+            max-width: 700px;
+            padding: 50px;
+            background: rgba(40, 0, 0, 0.95);
+            border: 4px solid #ff0040;
+            border-radius: 15px;
+            box-shadow: 0 0 50px rgba(255, 0, 64, 0.7);
+        }
+        
+        .death-title {
+            font-family: 'Russo One', sans-serif;
+            font-size: 72px;
+            color: #ff0040;
+            text-shadow: 0 0 30px rgba(255, 0, 64, 1);
+            margin-bottom: 30px;
+            animation: glitch 1s infinite;
+        }
+        
+        @keyframes glitch {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-3px); }
+            40% { transform: translateX(3px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
+        }
+        
+        .death-stats {
+            font-size: 22px;
+            color: #fff;
+            margin: 35px 0;
+            line-height: 2.2;
+        }
+        
+        .death-stat {
+            margin: 12px 0;
+        }
+        
+        .death-stat span {
+            color: #ff3344;
+            font-weight: 700;
+        }
+        
+        .restart-btn {
+            background: linear-gradient(135deg, #ff0040, #cc0033);
+            color: #fff;
+            border: none;
+            font-family: 'Russo One', sans-serif;
+            font-size: 26px;
+            padding: 18px 50px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            box-shadow: 0 6px 25px rgba(255, 0, 64, 0.5);
+        }
+        
+        .restart-btn:hover {
+            transform: scale(1.15);
+            box-shadow: 0 8px 35px rgba(255, 0, 64, 0.8);
+        }
+        
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            flex-direction: column;
+        }
+        
+        .loading-title {
+            font-family: 'Russo One', sans-serif;
+            font-size: 56px;
+            color: #ff3344;
+            margin-bottom: 40px;
+            text-shadow: 0 0 25px rgba(255, 50, 50, 1);
+        }
+        
+        .loading-text {
+            font-size: 20px;
+            color: #fff;
+            margin-bottom: 25px;
+        }
+        
+        .start-btn {
+            background: linear-gradient(135deg, #ff0040, #cc0033);
+            color: #fff;
+            border: none;
+            font-family: 'Russo One', sans-serif;
+            font-size: 26px;
+            padding: 18px 50px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            box-shadow: 0 6px 25px rgba(255, 0, 64, 0.5);
+            animation: pulse 2s infinite;
+        }
+        
+        .start-btn:hover {
+            transform: scale(1.15);
+            box-shadow: 0 8px 35px rgba(255, 0, 64, 0.8);
+        }
+
+        .weapon-indicator {
+            position: absolute;
+            bottom: 150px;
+            right: 30px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 3px solid rgba(255, 50, 50, 0.7);
+            border-radius: 8px;
+            padding: 15px 20px;
+            font-size: 20px;
+            color: #fff;
+            font-weight: 700;
+            box-shadow: 0 0 20px rgba(255, 50, 50, 0.4);
+        }
+
+        .build-menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            border: 4px solid #ff3344;
+            border-radius: 12px;
+            padding: 30px;
+            display: none;
+            pointer-events: auto;
+            z-index: 500;
+            box-shadow: 0 0 40px rgba(255, 50, 50, 0.6);
+        }
+
+        .build-menu.active {
+            display: block;
+        }
+
+        .build-title {
+            font-family: 'Russo One', sans-serif;
+            font-size: 28px;
+            color: #ff3344;
+            margin-bottom: 20px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .build-option {
+            background: rgba(255, 50, 50, 0.2);
+            border: 2px solid #ff3344;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .build-option:hover {
+            background: rgba(255, 50, 50, 0.4);
+            transform: scale(1.05);
+        }
+
+        .build-option.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .build-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .build-cost {
+            font-size: 14px;
+            color: #ffaaaa;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <div class="crosshair"></div>
+    
+    <div class="hud">
+        <div class="stats-panel">
+            <div class="stat-bar">
+                <div class="stat-label">
+                    <span>❤️ CAN</span>
+                    <span id="health-value">100</span>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-fill health-bar" id="health-bar" style="width: 100%"></div>
+                </div>
+            </div>
+            
+            <div class="stat-bar">
+                <div class="stat-label">
+                    <span>🍖 AÇLIK</span>
+                    <span id="hunger-value">100</span>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-fill hunger-bar" id="hunger-bar" style="width: 100%"></div>
+                </div>
+            </div>
+            
+            <div class="stat-bar">
+                <div class="stat-label">
+                    <span>💧 SUSUZLUK</span>
+                    <span id="thirst-value">100</span>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-fill thirst-bar" id="thirst-bar" style="width: 100%"></div>
+                </div>
+            </div>
+            
+            <div class="stat-bar">
+                <div class="stat-label">
+                    <span>🚽 TUVALET</span>
+                    <span id="toilet-value">100</span>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-fill toilet-bar" id="toilet-bar" style="width: 100%"></div>
+                </div>
+            </div>
+            
+            <div class="stat-bar">
+                <div class="stat-label">
+                    <span>⚡ ENERJİ</span>
+                    <span id="stamina-value">100</span>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-fill stamina-bar" id="stamina-bar" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="time-panel">
+            <div class="day-counter">GÜN <span id="day-count">1</span></div>
+            <div class="time-of-day" id="time-of-day">GÜNDÜZ</div>
+        </div>
+        
+        <div class="weapon-indicator">
+            🪓 BALTA
+        </div>
+        
+        <div class="inventory-panel">
+            <div class="inventory-title">📦 ENVANTER</div>
+            <div class="inventory-grid" id="inventory-grid"></div>
+        </div>
+        
+        <div class="interaction-prompt" id="interaction-prompt">
+            [E] Etkileşim
+        </div>
+        
+        <div class="controls-help">
+            <div><span class="key">WASD</span> Hareket</div>
+            <div><span class="key">MOUSE</span> Bakış</div>
+            <div><span class="key">E</span> Toplama/Kes</div>
+            <div><span class="key">F</span> Yemek Ye</div>
+            <div><span class="key">B</span> İnşa Et</div>
+            <div><span class="key">SHIFT</span> Koş</div>
+            <div><span class="key">SPACE</span> Zıpla</div>
+            <div><span class="key">CLICK</span> Saldır</div>
+        </div>
+        
+        <div class="message-log" id="message-log"></div>
+
+        <div class="build-menu" id="build-menu">
+            <div class="build-title">İNŞA MENÜSÜ</div>
+            <div id="build-options"></div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="closeBuildMenu()" style="background: #ff3344; color: #fff; border: none; padding: 10px 30px; border-radius: 5px; cursor: pointer; font-family: 'Russo One', sans-serif;">KAPAT (B)</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="death-screen" id="death-screen">
+        <div class="death-content">
+            <div class="death-title">ÖLDÜN</div>
+            <div class="death-stats">
+                <div class="death-stat">Hayatta Kaldığın Gün: <span id="final-days">0</span></div>
+                <div class="death-stat">Kesilen Ağaç: <span id="final-trees">0</span></div>
+                <div class="death-stat">Öldürülen Hayvan: <span id="final-animals">0</span></div>
+                <div class="death-stat">Öldürülen Yaratık: <span id="final-monsters">0</span></div>
+                <div class="death-stat">Yapılan Ev: <span id="final-houses">0</span></div>
+            </div>
+            <button class="restart-btn" onclick="location.reload()">TEKRAR DENE</button>
+        </div>
+    </div>
+    
+    <div class="loading-screen" id="loading-screen">
+        <div class="loading-title">3D HAYATTA KALMA</div>
+        <div class="loading-text">Vahşi dünya hazırlanıyor...</div>
+        <button class="start-btn" id="start-btn">HAYATTA KALMAYI BAŞLAT</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Game State
+        const gameState = {
+            health: 100,
+            hunger: 100,
+            thirst: 100,
+            toilet: 100,
+            stamina: 100,
+            day: 1,
+            time: 0,
+            timeOfDay: 'day', // day or night
+            inventory: {
+                'Odun': 0,
+                'Et': 0,
+                'Konserve': 0,
+                'Su': 0
+            },
+            stats: {
+                treescut: 0,
+                animalsKilled: 0,
+                monstersKilled: 0,
+                housesBuilt: 0
+            },
+            hasAxe: true,
+            isAlive: true,
+            houses: []
+        };
+        
+        // Items data
+        const itemsData = {
+            'Odun': { icon: '🪵', type: 'material' },
+            'Et': { icon: '🥩', type: 'food', hunger: 40, health: 10 },
+            'Konserve': { icon: '🥫', type: 'food', hunger: 30, health: 5 },
+            'Su': { icon: '💧', type: 'drink', thirst: 50, health: 0 }
+        };
+        
+        // Three.js setup
+        let scene, camera, renderer;
+        let world = [];
+        let trees = [];
+        let animals = [];
+        let monsters = [];
+        let raycaster, mouse = new THREE.Vector2();
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        let canJump = false, isRunning = false;
+        let velocity = new THREE.Vector3();
+        let direction = new THREE.Vector3();
+        let interactableObject = null;
+        
+        // Controls
+        const keys = {};
+        
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 50, 250);
+            
+            // Camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1.6, 5);
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+            
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(50, 100, 50);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.camera.left = -150;
+            directionalLight.shadow.camera.right = 150;
+            directionalLight.shadow.camera.top = 150;
+            directionalLight.shadow.camera.bottom = -150;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+            
+            window.directionalLight = directionalLight;
+            
+            // Ground
+            const groundGeometry = new THREE.PlaneGeometry(300, 300);
+            const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x4a7c59 });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // Create world
+            createTrees();
+            createAnimals();
+            createItems();
+            
+            // Raycaster
+            raycaster = new THREE.Raycaster();
+            
+            // Event listeners
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('click', onMouseClick);
+            
+            // Pointer lock
+            renderer.domElement.addEventListener('click', () => {
+                renderer.domElement.requestPointerLock();
+            });
+            
+            // Start game loop
+            gameLoop();
+            animate();
+            
+            // Update inventory
+            updateInventory();
+            updateBuildMenu();
+        }
+        
+        function createTrees() {
+            const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+            const leavesMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+            
+            for (let i = 0; i < 80; i++) {
+                const trunk = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.4, 0.5, 5, 8),
+                    trunkMaterial
+                );
+                
+                const leaves = new THREE.Mesh(
+                    new THREE.SphereGeometry(2.5, 8, 8),
+                    leavesMaterial
+                );
+                
+                const tree = new THREE.Group();
+                trunk.position.y = 2.5;
+                leaves.position.y = 6;
+                
+                tree.add(trunk);
+                tree.add(leaves);
+                
+                tree.position.x = (Math.random() - 0.5) * 280;
+                tree.position.z = (Math.random() - 0.5) * 280;
+                
+                tree.userData = { 
+                    type: 'tree', 
+                    health: 3,
+                    maxHealth: 3
+                };
+                
+                trunk.castShadow = true;
+                leaves.castShadow = true;
+                
+                scene.add(tree);
+                trees.push(tree);
+                world.push(tree);
+            }
+        }
+        
+        function createAnimals() {
+            const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+            
+            for (let i = 0; i < 20; i++) {
+                const body = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.5, 1, 2),
+                    bodyMaterial
+                );
+                
+                const head = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.8, 0.8, 1),
+                    bodyMaterial
+                );
+                
+                const animal = new THREE.Group();
+                body.position.y = 0.5;
+                head.position.set(0, 0.8, 1.2);
+                
+                animal.add(body);
+                animal.add(head);
+                
+                animal.position.x = (Math.random() - 0.5) * 250;
+                animal.position.z = (Math.random() - 0.5) * 250;
+                
+                animal.userData = { 
+                    type: 'animal',
+                    health: 2,
+                    moveSpeed: 0.02,
+                    moveDirection: Math.random() * Math.PI * 2
+                };
+                
+                body.castShadow = true;
+                head.castShadow = true;
+                
+                scene.add(animal);
+                animals.push(animal);
+                world.push(animal);
+            }
+        }
+
+        function createMonster(x, z) {
+            const bodyMaterial = new THREE.MeshLambertMaterial({ 
+                color: 0x2a0a0a,
+                emissive: 0xff0000,
+                emissiveIntensity: 0.3
+            });
+            
+            const body = new THREE.Mesh(
+                new THREE.BoxGeometry(1.2, 2, 1.2),
+                bodyMaterial
+            );
+            
+            const head = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 1, 1),
+                bodyMaterial
+            );
+            
+            const monster = new THREE.Group();
+            body.position.y = 1;
+            head.position.y = 2.2;
+            
+            monster.add(body);
+            monster.add(head);
+            
+            monster.position.set(x, 0, z);
+            
+            monster.userData = { 
+                type: 'monster',
+                health: 3,
+                damage: 15,
+                attackCooldown: 0,
+                chaseSpeed: 0.08
+            };
+            
+            body.castShadow = true;
+            head.castShadow = true;
+            
+            scene.add(monster);
+            monsters.push(monster);
+            world.push(monster);
+        }
+        
+        function createItems() {
+            // Spawn some food items
+            for (let i = 0; i < 15; i++) {
+                const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+                const material = new THREE.MeshLambertMaterial({ 
+                    color: 0xff8800,
+                    emissive: 0xff8800,
+                    emissiveIntensity: 0.3
+                });
+                const item = new THREE.Mesh(geometry, material);
+                
+                item.position.x = (Math.random() - 0.5) * 280;
+                item.position.y = 0.25;
+                item.position.z = (Math.random() - 0.5) * 280;
+                
+                item.userData = { 
+                    type: 'item', 
+                    itemName: 'Konserve',
+                    rotation: Math.random() * 0.02 + 0.01
+                };
+                item.castShadow = true;
+                
+                scene.add(item);
+                world.push(item);
+            }
+
+            // Water
+            for (let i = 0; i < 15; i++) {
+                const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+                const material = new THREE.MeshLambertMaterial({ 
+                    color: 0x00aaff,
+                    emissive: 0x00aaff,
+                    emissiveIntensity: 0.3
+                });
+                const item = new THREE.Mesh(geometry, material);
+                
+                item.position.x = (Math.random() - 0.5) * 280;
+                item.position.y = 0.25;
+                item.position.z = (Math.random() - 0.5) * 280;
+                
+                item.userData = { 
+                    type: 'item', 
+                    itemName: 'Su',
+                    rotation: Math.random() * 0.02 + 0.01
+                };
+                item.castShadow = true;
+                
+                scene.add(item);
+                world.push(item);
+            }
+        }
+        
+        function onKeyDown(event) {
+            keys[event.code] = true;
+            
+            switch (event.code) {
+                case 'KeyW': moveForward = true; break;
+                case 'KeyS': moveBackward = true; break;
+                case 'KeyA': moveLeft = true; break;
+                case 'KeyD': moveRight = true; break;
+                case 'Space': 
+                    if (canJump) {
+                        velocity.y += 8;
+                        canJump = false;
+                    }
+                    break;
+                case 'ShiftLeft': isRunning = true; break;
+                case 'KeyE': interact(); break;
+                case 'KeyF': eatFood(); break;
+                case 'KeyB': toggleBuildMenu(); break;
+            }
+        }
+        
+        function onKeyUp(event) {
+            keys[event.code] = false;
+            
+            switch (event.code) {
+                case 'KeyW': moveForward = false; break;
+                case 'KeyS': moveBackward = false; break;
+                case 'KeyA': moveLeft = false; break;
+                case 'KeyD': moveRight = false; break;
+                case 'ShiftLeft': isRunning = false; break;
+            }
+        }
+        
+        let mouseX = 0, mouseY = 0;
+        const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+        
+        function onMouseMove(event) {
+            if (document.pointerLockElement === renderer.domElement) {
+                const sensitivity = 0.002;
+                
+                mouseX -= event.movementX * sensitivity;
+                mouseY -= event.movementY * sensitivity;
+                
+                mouseY = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, mouseY));
+                
+                euler.set(mouseY, mouseX, 0);
+                camera.quaternion.setFromEuler(euler);
+            }
+        }
+        
+        function onMouseClick() {
+            if (document.pointerLockElement === renderer.domElement) {
+                attack();
+            }
+        }
+
+        function attack() {
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+            const intersects = raycaster.intersectObjects(world, true);
+            
+            if (intersects.length > 0 && intersects[0].distance < 4) {
+                let obj = intersects[0].object;
+                
+                // Find parent group
+                while (obj.parent && !obj.userData.type) {
+                    obj = obj.parent;
+                }
+                
+                if (obj.userData.type === 'tree') {
+                    obj.userData.health--;
+                    addMessage(`Ağaca vurdun! (${obj.userData.health}/${obj.userData.maxHealth})`, 'info');
+                    
+                    if (obj.userData.health <= 0) {
+                        scene.remove(obj);
+                        trees = trees.filter(t => t !== obj);
+                        world = world.filter(w => w !== obj);
+                        
+                        const woodAmount = Math.floor(Math.random() * 3) + 3;
+                        gameState.inventory['Odun'] += woodAmount;
+                        gameState.stats.treescut++;
+                        
+                        addMessage(`Ağaç kesildi! +${woodAmount} Odun`, 'success');
+                        updateInventory();
+                    }
+                } else if (obj.userData.type === 'animal') {
+                    obj.userData.health--;
+                    addMessage(`Hayvana vurdun! (${obj.userData.health} can)`, 'info');
+                    
+                    if (obj.userData.health <= 0) {
+                        scene.remove(obj);
+                        animals = animals.filter(a => a !== obj);
+                        world = world.filter(w => w !== obj);
+                        
+                        const meatAmount = Math.floor(Math.random() * 2) + 2;
+                        gameState.inventory['Et'] += meatAmount;
+                        gameState.stats.animalsKilled++;
+                        
+                        addMessage(`Hayvan öldü! +${meatAmount} Et`, 'success');
+                        updateInventory();
+                    }
+                } else if (obj.userData.type === 'monster') {
+                    obj.userData.health--;
+                    addMessage(`Yaratığa vurdun! (${obj.userData.health} can)`, 'info');
+                    
+                    if (obj.userData.health <= 0) {
+                        scene.remove(obj);
+                        monsters = monsters.filter(m => m !== obj);
+                        world = world.filter(w => w !== obj);
+                        
+                        gameState.stats.monstersKilled++;
+                        addMessage(`Yaratık öldürüldü!`, 'success');
+                    }
+                }
+            }
+        }
+        
+        function interact() {
+            if (interactableObject) {
+                if (interactableObject.userData.type === 'item') {
+                    const itemName = interactableObject.userData.itemName;
+                    
+                    gameState.inventory[itemName]++;
+                    
+                    scene.remove(interactableObject);
+                    world = world.filter(obj => obj !== interactableObject);
+                    
+                    addMessage(`${itemName} topladın!`, 'success');
+                    updateInventory();
+                    
+                    interactableObject = null;
+                }
+            }
+        }
+
+        function eatFood() {
+            // Try to eat raw meat or canned food
+            if (gameState.inventory['Et'] > 0) {
+                gameState.inventory['Et']--;
+                gameState.hunger = Math.min(100, gameState.hunger + 40);
+                gameState.health = Math.min(100, gameState.health + 10);
+                gameState.toilet = Math.max(0, gameState.toilet - 15);
+                addMessage('Et yedin! Lezzetli!', 'success');
+                updateInventory();
+            } else if (gameState.inventory['Konserve'] > 0) {
+                gameState.inventory['Konserve']--;
+                gameState.hunger = Math.min(100, gameState.hunger + 30);
+                gameState.health = Math.min(100, gameState.health + 5);
+                gameState.toilet = Math.max(0, gameState.toilet - 10);
+                addMessage('Konserve yedin!', 'success');
+                updateInventory();
+            } else {
+                addMessage('Yiyecek bir şey yok!', 'danger');
+            }
+
+            // Try to drink water
+            if (gameState.inventory['Su'] > 0) {
+                gameState.inventory['Su']--;
+                gameState.thirst = Math.min(100, gameState.thirst + 50);
+                gameState.toilet = Math.max(0, gameState.toilet - 12);
+                addMessage('Su içtin!', 'success');
+                updateInventory();
+            }
+        }
+
+        function toggleBuildMenu() {
+            const menu = document.getElementById('build-menu');
+            menu.classList.toggle('active');
+            updateBuildMenu();
+        }
+
+        function closeBuildMenu() {
+            document.getElementById('build-menu').classList.remove('active');
+        }
+
+        function updateBuildMenu() {
+            const container = document.getElementById('build-options');
+            container.innerHTML = '';
+
+            const buildOptions = [
+                {
+                    name: 'Basit Ev',
+                    cost: { 'Odun': 5 },
+                    description: 'Güvenli bir barınak'
+                },
+                {
+                    name: 'Tuvalet',
+                    cost: { 'Odun': 3 },
+                    description: 'Tuvalet ihtiyacını gider'
+                }
+            ];
+
+            buildOptions.forEach(option => {
+                const canBuild = Object.entries(option.cost).every(
+                    ([item, amount]) => gameState.inventory[item] >= amount
+                );
+
+                const div = document.createElement('div');
+                div.className = 'build-option' + (canBuild ? '' : ' disabled');
+                div.innerHTML = `
+                    <div class="build-name">${option.name}</div>
+                    <div class="build-cost">Maliyet: ${Object.entries(option.cost).map(([k, v]) => `${k} x${v}`).join(', ')}</div>
+                `;
+
+                if (canBuild) {
+                    div.onclick = () => build(option);
+                }
+
+                container.appendChild(div);
+            });
+        }
+
+        function build(option) {
+            // Consume resources
+            Object.entries(option.cost).forEach(([item, amount]) => {
+                gameState.inventory[item] -= amount;
+            });
+
+            if (option.name === 'Basit Ev') {
+                buildHouse();
+                gameState.stats.housesBuilt++;
+            } else if (option.name === 'Tuvalet') {
+                gameState.toilet = 100;
+                addMessage('Tuvalet kullandın!', 'success');
+            }
+
+            updateInventory();
+            updateBuildMenu();
+            closeBuildMenu();
+        }
+
+        function buildHouse() {
+            const houseMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+            const roofMaterial = new THREE.MeshLambertMaterial({ color: 0x654321 });
+
+            const walls = new THREE.Mesh(
+                new THREE.BoxGeometry(5, 3, 5),
+                houseMaterial
+            );
+
+            const roof = new THREE.Mesh(
+                new THREE.ConeGeometry(4, 2, 4),
+                roofMaterial
+            );
+
+            const house = new THREE.Group();
+            walls.position.y = 1.5;
+            roof.position.y = 4;
+            roof.rotation.y = Math.PI / 4;
+
+            house.add(walls);
+            house.add(roof);
+
+            // Place near player
+            const offset = 8;
+            house.position.x = camera.position.x + Math.cos(mouseX) * offset;
+            house.position.z = camera.position.z + Math.sin(mouseX) * offset;
+
+            house.userData = { type: 'house' };
+
+            walls.castShadow = true;
+            roof.castShadow = true;
+
+            scene.add(house);
+            gameState.houses.push(house);
+
+            addMessage('Ev inşa edildi! Gece güvendesin.', 'success');
+        }
+        
+        function checkInteractables() {
+            raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+            
+            const intersects = raycaster.intersectObjects(world);
+            
+            if (intersects.length > 0) {
+                const obj = intersects[0].object;
+                
+                if (obj.userData.type === 'item' && intersects[0].distance < 3) {
+                    interactableObject = obj;
+                    document.getElementById('interaction-prompt').style.display = 'block';
+                    obj.material.emissiveIntensity = 0.6;
+                    return;
+                }
+            }
+            
+            if (interactableObject) {
+                interactableObject.material.emissiveIntensity = 0.3;
+            }
+            interactableObject = null;
+            document.getElementById('interaction-prompt').style.display = 'none';
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (!gameState.isAlive) return;
+            
+            // Movement
+            const speed = isRunning ? 0.15 : 0.1;
+            
+            direction.set(0, 0, 0);
+            
+            if (moveForward) direction.z -= 1;
+            if (moveBackward) direction.z += 1;
+            if (moveLeft) direction.x -= 1;
+            if (moveRight) direction.x += 1;
+            
+            direction.normalize();
+            direction.applyQuaternion(camera.quaternion);
+            direction.y = 0;
+            
+            camera.position.x += direction.x * speed;
+            camera.position.z += direction.z * speed;
+            
+            // Gravity
+            velocity.y -= 0.4;
+            camera.position.y += velocity.y * 0.016;
+            
+            if (camera.position.y <= 1.6) {
+                camera.position.y = 1.6;
+                velocity.y = 0;
+                canJump = true;
+            }
+            
+            // Stamina
+            if (isRunning && (moveForward || moveBackward || moveLeft || moveRight)) {
+                gameState.stamina -= 0.05;
+            }
+            
+            // Boundaries
+            const boundary = 145;
+            camera.position.x = Math.max(-boundary, Math.min(boundary, camera.position.x));
+            camera.position.z = Math.max(-boundary, Math.min(boundary, camera.position.z));
+            
+            // Animal AI
+            animals.forEach(animal => {
+                animal.userData.moveDirection += (Math.random() - 0.5) * 0.1;
+                animal.position.x += Math.cos(animal.userData.moveDirection) * animal.userData.moveSpeed;
+                animal.position.z += Math.sin(animal.userData.moveDirection) * animal.userData.moveSpeed;
+                animal.rotation.y = animal.userData.moveDirection;
+
+                // Boundaries
+                if (Math.abs(animal.position.x) > 140 || Math.abs(animal.position.z) > 140) {
+                    animal.userData.moveDirection += Math.PI;
+                }
+            });
+
+            // Monster AI
+            monsters.forEach(monster => {
+                const dx = camera.position.x - monster.position.x;
+                const dz = camera.position.z - monster.position.z;
+                const distance = Math.sqrt(dx * dx + dz * dz);
+
+                if (distance < 30) {
+                    // Chase player
+                    const angle = Math.atan2(dz, dx);
+                    monster.position.x += Math.cos(angle) * monster.userData.chaseSpeed;
+                    monster.position.z += Math.sin(angle) * monster.userData.chaseSpeed;
+                    monster.rotation.y = angle + Math.PI;
+
+                    // Attack if close
+                    if (distance < 2 && monster.userData.attackCooldown <= 0) {
+                        gameState.health -= monster.userData.damage;
+                        addMessage(`Yaratık saldırdı! -${monster.userData.damage} can`, 'danger');
+                        monster.userData.attackCooldown = 60;
+                    }
+                }
+
+                if (monster.userData.attackCooldown > 0) {
+                    monster.userData.attackCooldown--;
+                }
+            });
+            
+            // Rotate items
+            world.forEach(obj => {
+                if (obj.userData.type === 'item') {
+                    obj.rotation.y += obj.userData.rotation;
+                }
+            });
+            
+            checkInteractables();
+            
+            renderer.render(scene, camera);
+        }
+        
+        function gameLoop() {
+            if (!gameState.isAlive) return;
+            
+            gameState.time += 1;
+            
+            // Decrease stats
+            if (gameState.time % 10 === 0) {
+                gameState.hunger = Math.max(0, gameState.hunger - 0.7);
+                gameState.thirst = Math.max(0, gameState.thirst - 1.0);
+                gameState.toilet = Math.max(0, gameState.toilet - 0.3);
+                gameState.stamina = Math.min(100, gameState.stamina + 0.3);
+            }
+            
+            // Day/Night cycle (120 seconds per day)
+            const dayProgress = (gameState.time % 120) / 120;
+            
+            if (dayProgress < 0.5) {
+                // Day
+                if (gameState.timeOfDay !== 'day') {
+                    gameState.timeOfDay = 'day';
+                    scene.background = new THREE.Color(0x87CEEB);
+                    scene.fog.color = new THREE.Color(0x87CEEB);
+                    window.directionalLight.intensity = 0.8;
+                    document.getElementById('time-of-day').textContent = 'GÜNDÜZ';
+                    document.getElementById('time-of-day').classList.remove('night');
+                    
+                    // Clear monsters
+                    monsters.forEach(m => scene.remove(m));
+                    monsters = [];
+                    
+                    addMessage('Gün doğdu. Güvendesin.', 'success');
+                }
+            } else {
+                // Night
+                if (gameState.timeOfDay !== 'night') {
+                    gameState.timeOfDay = 'night';
+                    scene.background = new THREE.Color(0x0a0a1a);
+                    scene.fog.color = new THREE.Color(0x0a0a1a);
+                    window.directionalLight.intensity = 0.2;
+                    document.getElementById('time-of-day').textContent = 'GECE';
+                    document.getElementById('time-of-day').classList.add('night');
+                    
+                    // Spawn monsters
+                    for (let i = 0; i < 8; i++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const distance = 40 + Math.random() * 60;
+                        const x = camera.position.x + Math.cos(angle) * distance;
+                        const z = camera.position.z + Math.sin(angle) * distance;
+                        createMonster(x, z);
+                    }
+                    
+                    addMessage('GECE BAŞLADI! Yaratıklar dolaşıyor...', 'danger');
+                }
+            }
+            
+            // Full day completed
+            if (gameState.time % 120 === 0 && gameState.time > 0) {
+                gameState.day++;
+                addMessage(`Gün ${gameState.day} başladı!`, 'warning');
+            }
+            
+            // Health damage from stats
+            if (gameState.hunger < 20 && gameState.time % 30 === 0) {
+                gameState.health -= 2;
+                addMessage('Açlıktan can kaybediyorsun!', 'danger');
+            }
+            
+            if (gameState.thirst < 20 && gameState.time % 25 === 0) {
+                gameState.health -= 3;
+                addMessage('Susuzluktan can kaybediyorsun!', 'danger');
+            }
+            
+            if (gameState.toilet < 10 && gameState.time % 40 === 0) {
+                gameState.health -= 1;
+                addMessage('Tuvalet ihtiyacın ciddi!', 'danger');
+            }
+            
+            // Death
+            if (gameState.health <= 0) {
+                die('Canın tükendi');
+            }
+            
+            updateStats();
+            
+            setTimeout(gameLoop, 1000);
+        }
+        
+        function updateStats() {
+            updateStat('health', gameState.health);
+            updateStat('hunger', gameState.hunger);
+            updateStat('thirst', gameState.thirst);
+            updateStat('toilet', gameState.toilet);
+            updateStat('stamina', gameState.stamina);
+            
+            document.getElementById('day-count').textContent = gameState.day;
+        }
+        
+        function updateStat(name, value) {
+            value = Math.max(0, Math.min(100, value));
+            gameState[name] = value;
+            
+            const bar = document.getElementById(name + '-bar');
+            const valueEl = document.getElementById(name + '-value');
+            
+            bar.style.width = value + '%';
+            valueEl.textContent = Math.round(value);
+        }
+        
+        function updateInventory() {
+            const grid = document.getElementById('inventory-grid');
+            grid.innerHTML = '';
+            
+            const itemList = Object.entries(gameState.inventory);
+            
+            for (let i = 0; i < 6; i++) {
+                const slot = document.createElement('div');
+                slot.className = 'inventory-slot';
+                
+                if (i < itemList.length && itemList[i][1] > 0) {
+                    const [itemName, count] = itemList[i];
+                    const itemData = itemsData[itemName];
+                    
+                    slot.classList.remove('empty');
+                    slot.innerHTML = `
+                        <div class="item-icon">${itemData.icon}</div>
+                        <div style="font-size: 12px;">${itemName}</div>
+                        <div class="item-count">x${count}</div>
+                    `;
+                } else {
+                    slot.classList.add('empty');
+                    slot.textContent = '—';
+                }
+                
+                grid.appendChild(slot);
+            }
+        }
+        
+        function addMessage(text, type = '') {
+            const log = document.getElementById('message-log');
+            const msg = document.createElement('div');
+            msg.className = 'message' + (type ? ' ' + type : '');
+            msg.textContent = text;
+            
+            log.insertBefore(msg, log.firstChild);
+            
+            setTimeout(() => {
+                msg.style.opacity = '0';
+                setTimeout(() => msg.remove(), 300);
+            }, 5000);
+            
+            while (log.children.length > 5) {
+                log.removeChild(log.lastChild);
+            }
+        }
+        
+        function die(reason) {
+            gameState.isAlive = false;
+            
+            document.getElementById('final-days').textContent = gameState.day;
+            document.getElementById('final-trees').textContent = gameState.stats.treescut;
+            document.getElementById('final-animals').textContent = gameState.stats.animalsKilled;
+            document.getElementById('final-monsters').textContent = gameState.stats.monstersKilled;
+            document.getElementById('final-houses').textContent = gameState.stats.housesBuilt;
+            
+            document.getElementById('death-screen').style.display = 'flex';
+        }
+        
+        document.getElementById('start-btn').addEventListener('click', () => {
+            document.getElementById('loading-screen').style.display = 'none';
+            init();
+            addMessage('Hayatta kalma başladı! Dikkatli ol...', 'warning');
+        });
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
