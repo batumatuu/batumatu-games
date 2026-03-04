@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GRANNY - 3 KAPILI KABUS</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Outfit:wght@300;400;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            background: #000;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #hud {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid white;
+            opacity: 0.5;
+        }
+
+        #inventory-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #444;
+        }
+
+        .inv-slot {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #333;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #fff;
+        }
+
+        .inv-slot.filled {
+            border-color: #f00;
+            background: rgba(255, 0, 0, 0.2);
+        }
+
+        .inv-slot .icon {
+            font-size: 20px;
+        }
+
+        #message-box {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Creepster', cursive;
+            font-size: 32px;
+            color: #f00;
+            text-shadow: 2px 2px 5px #000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #message-box.show {
+            opacity: 1;
+        }
+
+        #interact-hint {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            color: #ffd700;
+            text-shadow: 1px 1px 2px #000;
+            opacity: 0;
+        }
+
+        #interact-hint.show {
+            opacity: 1;
+        }
+
+        #main-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #111;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        #main-menu h1 {
+            font-family: 'Creepster', cursive;
+            font-size: 100px;
+            color: #8b0000;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #f00;
+        }
+
+        .menu-btn {
+            padding: 15px 40px;
+            font-size: 24px;
+            font-family: 'Creepster', cursive;
+            background: #8b0000;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px #000;
+        }
+
+        .menu-btn:hover {
+            background: #f00;
+        }
+
+        #death-screen,
+        #win-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            background: #000;
+        }
+
+        #death-screen h1 {
+            color: #f00;
+            font-family: 'Creepster', cursive;
+            font-size: 120px;
+        }
+
+        #jumpscare-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            z-index: 3000;
+            background: #000;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        #jumpscare-overlay .scary-face {
+            font-size: 150px;
+            color: #f00;
+            font-family: 'Creepster';
+            text-shadow: 0 0 40px red, 0 0 80px black;
+        }
+
+        .shake {
+            animation: shake 0.1s infinite;
+        }
+
+        @keyframes shake {
+            0% {
+                transform: translate(15px, 15px);
+            }
+
+            50% {
+                transform: translate(-15px, -15px);
+            }
+
+            100% {
+                transform: translate(15px, -15px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game-container"></div>
+    <div id="hud">
+        <div id="crosshair"></div>
+        <div id="message-box"></div>
+        <div id="interact-hint"></div>
+        <div id="inventory-panel">
+            <div class="inv-slot" id="slot-0"><span class="icon">📦</span></div>
+            <div class="inv-slot" id="slot-1"><span class="icon">📦</span></div>
+            <div class="inv-slot" id="slot-2"><span class="icon">📦</span></div>
+        </div>
+    </div>
+    <div id="main-menu">
+        <h1>GRANNY</h1>
+        <button class="menu-btn" onclick="startGame()">OYUNA BAŞLA</button>
+        <p style="color: #666; margin-top: 20px;">WASD: Hareket | F: Fener | E: Etkileşim | Mouse: Bakış</p>
+    </div>
+    <div id="death-screen">
+        <h1>ÖLDÜN!</h1>
+        <button class="menu-btn" onclick="location.reload()">TEKRAR DENE</button>
+    </div>
+    <div id="jumpscare-overlay">
+        <div class="scary-face">GEBER!</div>
+    </div>
+    <div id="win-screen">
+        <h1>TEBRİKLER KURTULDUN!</h1>
+        <button class="menu-btn" onclick="location.reload()">TEKRAR OYNA</button>
+    </div>
+
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+        // OYUN AYARLARI
+        const CONFIG = {
+            PLAYER_HEIGHT: 1.7,
+            WALK_SPEED: 0.1,
+            RUN_SPEED: 0.18,
+            GRANNY_SPEED: 0.06,
+            FLOOR_HEIGHT: 6,
+            HOUSE_SIZE: 30
+        };
+
+        let scene, camera, renderer, controls, clock;
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false, isRunning = false;
+        let granny, grannyWaypoints = [], currentWaypoint = 0, grannyState = 'patrol';
+        let inventory = [], collisionObjects = [], interactables = [];
+        let flashlight, gameStarted = false, isDead = false;
+        let downRaycaster, floorLevel = 0;
+        let audioCtx, ambientOsc, screamOsc;
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x050505);
+            scene.fog = new THREE.Fog(0x050505, 2, 40);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, CONFIG.PLAYER_HEIGHT, 5);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.getElementById('game-container').appendChild(renderer.domElement);
+
+            controls = new PointerLockControls(camera, document.body);
+            clock = new THREE.Clock();
+            downRaycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0), 0, 10);
+
+            createLights();
+            createHouse();
+            createGranny();
+            spawnItems();
+            initAudio();
+
+            window.addEventListener('resize', onWindowResize);
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+            animate();
+        }
+
+        window.startGame = function () {
+            controls.lock();
+            document.getElementById('main-menu').style.display = 'none';
+            gameStarted = true;
+        };
+
+        function createLights() {
+            const amb = new THREE.AmbientLight(0xffffff, 0.3);
+            scene.add(amb);
+
+            flashlight = new THREE.SpotLight(0xffffff, 10, 30, Math.PI / 6, 0.5, 1);
+            flashlight.castShadow = true;
+            scene.add(flashlight);
+            scene.add(flashlight.target);
+        }
+
+        function createHouse() {
+            const h = CONFIG.FLOOR_HEIGHT;
+            const w = CONFIG.HOUSE_SIZE;
+
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x443322 });
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x221100 });
+
+            // Katlar ve Tavanlar
+            for (let i = 0; i < 3; i++) {
+                const floorGeom = new THREE.BoxGeometry(w, 0.2, w);
+                const floor = new THREE.Mesh(floorGeom, floorMat);
+                floor.position.y = i * h;
+                scene.add(floor);
+                collisionObjects.push(floor);
+
+                // Dış Duvarlar
+                createWall(0, i * h + h / 2, -w / 2, w, h, 0.5, wallMat);
+                createWall(0, i * h + h / 2, w / 2, w, h, 0.5, wallMat);
+                createWall(-w / 2, i * h + h / 2, 0, 0.5, h, w, wallMat);
+                createWall(w / 2, i * h + h / 2, 0, 0.5, h, w, wallMat);
+
+                if (i === 0) {
+                    createWall(5, h / 2, 5, 0.5, h, 10, wallMat);
+                    createWall(-5, h / 2, -5, 10, h, 0.5, wallMat);
+                } else if (i === 1) {
+                    createWall(0, i * h + h / 2, 0, 15, h, 0.5, wallMat);
+                }
+
+                // Merdiven Boşluğu (Basitçe tavanın bir kısmını silmek yerine tavanı 2 parça yapalım)
+                if (i < 2) {
+                    const roof1 = new THREE.Mesh(new THREE.BoxGeometry(w / 2 + 2, 0.2, w), wallMat);
+                    roof1.position.set(-w / 4 - 1, (i + 1) * h, 0);
+                    scene.add(roof1);
+                    collisionObjects.push(roof1);
+
+                    const roof2 = new THREE.Mesh(new THREE.BoxGeometry(w / 2 - 8, 0.2, w), wallMat);
+                    roof2.position.set(w / 4 + 4, (i + 1) * h, 0);
+                    scene.add(roof2);
+                    collisionObjects.push(roof2);
+                }
+            }
+
+            // Merdivenler
+            createStair(w / 2 - 3, 0, 0, h);
+            createStair(w / 2 - 3, h, 5, h);
+
+            createDoor(0, 1.5, -w / 2 + 0.3, "Garaj Kapısı (Kırmızı)", "Garaj Anahtarı", 0xff0000);
+            createDoor(w / 2 - 0.3, 1.5, 0, "Ana Giriş (Yeşil)", "Ev Anahtarı", 0x00ff00);
+            createDoor(-w / 2 + 0.3, 1.5, 0, "Bodrum Çıkışı (Mavi)", "Kırmızı Anahtar", 0x0000ff);
+        }
+
+        function createWall(x, y, z, w, h, d, mat) {
+            const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+            mesh.position.set(x, y, z);
+            mesh.receiveShadow = true;
+            mesh.castShadow = true;
+            scene.add(mesh);
+            collisionObjects.push(mesh);
+        }
+
+        function createStair(x, baseY, z, h) {
+            const steps = 15;
+            for (let i = 0; i < steps; i++) {
+                const step = new THREE.Mesh(new THREE.BoxGeometry(4, 0.5, 1), new THREE.MeshStandardMaterial({ color: 0x442200 }));
+                step.position.set(x, baseY + i * (h / steps), z + i * 0.5);
+                scene.add(step);
+                collisionObjects.push(step);
+            }
+        }
+
+        function createDoor(x, y, z, name, keyNeeded, color) {
+            const door = new THREE.Mesh(new THREE.BoxGeometry(3, 3, 0.4), new THREE.MeshStandardMaterial({ color: color }));
+            door.position.set(x, y, z);
+            if (Math.abs(x) > Math.abs(z)) door.rotation.y = Math.PI / 2;
+            door.userData = { isDoor: true, name: name, key: keyNeeded };
+            scene.add(door);
+            interactables.push(door);
+        }
+
+        function createGranny() {
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 2, 8), new THREE.MeshStandardMaterial({ color: 0x880000 }));
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), new THREE.MeshStandardMaterial({ color: 0xaaaaaa }));
+            head.position.y = 1.4;
+
+            granny = new THREE.Group();
+            granny.add(body);
+            granny.add(head);
+            granny.position.set(-10, 1, -10);
+            scene.add(granny);
+
+            grannyWaypoints = [
+                new THREE.Vector3(-10, 1, -10),
+                new THREE.Vector3(10, 1, -10),
+                new THREE.Vector3(10, 1, 10),
+                new THREE.Vector3(-10, 1, 10),
+                new THREE.Vector3(10, CONFIG.FLOOR_HEIGHT + 1, 0)
+            ];
+        }
+
+        function spawnItems() {
+            const items = [
+                { name: "Garaj Anahtarı", color: 0xff0000, pos: [0, CONFIG.FLOOR_HEIGHT * 2 + 1, 0] },
+                { name: "Ev Anahtarı", color: 0x00ff00, pos: [-8, CONFIG.FLOOR_HEIGHT + 1, 8] },
+                { name: "Kırmızı Anahtar", color: 0x0000ff, pos: [8, 1, -8] }
+            ];
+            items.forEach(it => {
+                const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.1, 0.1), new THREE.MeshStandardMaterial({ color: it.color, emissive: it.color }));
+                mesh.position.set(...it.pos);
+                mesh.userData = { isItem: true, name: it.name };
+                scene.add(mesh);
+                interactables.push(mesh);
+            });
+        }
+
+        function onKeyDown(e) {
+            switch (e.code) {
+                case 'KeyW': moveForward = true; break;
+                case 'KeyS': moveBackward = true; break;
+                case 'KeyA': moveLeft = true; break;
+                case 'KeyD': moveRight = true; break;
+                case 'ShiftLeft': isRunning = true; break;
+                case 'KeyE': interact(); break;
+            }
+        }
+        function onKeyUp(e) {
+            switch (e.code) {
+                case 'KeyW': moveForward = false; break;
+                case 'KeyS': moveBackward = false; break;
+                case 'KeyA': moveLeft = false; break;
+                case 'KeyD': moveRight = false; break;
+                case 'ShiftLeft': isRunning = false; break;
+            }
+        }
+
+        function interact() {
+            const ray = new THREE.Raycaster();
+            ray.setFromCamera({ x: 0, y: 0 }, camera);
+            const hits = ray.intersectObjects(interactables);
+            if (hits.length > 0 && hits[0].distance < 4) {
+                const obj = hits[0].object;
+                if (obj.userData.isItem) {
+                    inventory.push(obj.userData.name);
+                    scene.remove(obj);
+                    updateInventoryUI();
+                    showMessage(obj.userData.name + " ALINDI!");
+                } else if (obj.userData.isDoor) {
+                    if (inventory.includes(obj.userData.key)) {
+                        showMessage("gazandık lan laylaylay!");
+                        gameStarted = false;
+                        document.getElementById('win-screen').style.display = 'flex';
+                        controls.unlock();
+                    } else {
+                        showMessage(obj.userData.key + " LAZIM!");
+                    }
+                }
+            }
+        }
+
+        function updateInventoryUI() {
+            const slots = [0, 1, 2];
+            slots.forEach(i => {
+                const el = document.getElementById('slot-' + i);
+                if (inventory[i]) {
+                    el.classList.add('filled');
+                    let color = "#fff";
+                    if (inventory[i].includes("Garaj")) color = "red";
+                    if (inventory[i].includes("Ev")) color = "green";
+                    if (inventory[i].includes("Kırmızı")) color = "blue";
+                    el.innerHTML = `<span class="icon" style="color: ${color}">🔑</span>`;
+                }
+            });
+        }
+
+        function showMessage(txt) {
+            const mb = document.getElementById('message-box');
+            mb.innerText = txt;
+            mb.classList.add('show');
+            setTimeout(() => mb.classList.remove('show'), 2000);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function updateGranny(delta) {
+            if (!gameStarted || isDead) return;
+            const dist = granny.position.distanceTo(camera.position);
+
+            // AI Durumları - Daha geniş algılama
+            if (dist < 15) grannyState = 'chase';
+            else grannyState = 'patrol';
+
+            let speed = (grannyState === 'chase') ? CONFIG.GRANNY_SPEED * 1.6 : CONFIG.GRANNY_SPEED;
+
+            if (grannyState === 'chase') {
+                const dir = new THREE.Vector3().subVectors(camera.position, granny.position).normalize();
+                granny.position.add(dir.multiplyScalar(speed));
+                if (Math.random() < 0.02) playOscillator(400, 0.1, 'sawtooth');
+            } else {
+                const target = grannyWaypoints[currentWaypoint];
+                const dir = new THREE.Vector3().subVectors(target, granny.position).normalize();
+                granny.position.add(dir.multiplyScalar(speed));
+                if (granny.position.distanceTo(target) < 0.5) currentWaypoint = (currentWaypoint + 1) % grannyWaypoints.length;
+            }
+            granny.lookAt(camera.position.x, granny.position.y, camera.position.z);
+
+            if (dist < 1.8 && !isDead) {
+                triggerJumpscare();
+            }
+        }
+
+        function triggerJumpscare() {
+            isDead = true;
+            const overlay = document.getElementById('jumpscare-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                overlay.classList.add('shake');
+            }
+            playScream();
+
+            setTimeout(() => {
+                if (overlay) overlay.style.display = 'none';
+                document.getElementById('death-screen').style.display = 'flex';
+                controls.unlock();
+            }, 1200);
+        }
+
+        function initAudio() {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                ambientOsc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                ambientOsc.type = 'sine';
+                ambientOsc.frequency.setValueAtTime(40, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+                ambientOsc.connect(gain);
+                gain.connect(audioCtx.destination);
+                ambientOsc.start();
+            } catch (e) { console.log("Audio not supported"); }
+        }
+
+        function playOscillator(freq, dur, type = 'sine') {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+            osc.connect(g);
+            g.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + dur);
+        }
+
+        function playScream() {
+            if (!audioCtx) return;
+            const dur = 1.5;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.4);
+            g.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            g.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + dur);
+            osc.connect(g);
+            g.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + dur);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+
+            if (controls.isLocked) {
+                const speed = isRunning ? CONFIG.RUN_SPEED : CONFIG.WALK_SPEED;
+
+                // Klavye hareketi
+                if (moveForward) controls.moveForward(speed);
+                if (moveBackward) controls.moveForward(-speed);
+                if (moveLeft) controls.moveRight(-speed);
+                if (moveRight) controls.moveRight(speed);
+
+                if (moveForward || moveBackward || moveLeft || moveRight) {
+                    if (Math.random() < 0.05) playOscillator(100, 0.05, 'sine');
+                }
+
+                updateInventoryUI();
+
+                // Merdiven ve Kat Yükseklik Kontrolü (Raycasting)
+                downRaycaster.ray.origin.copy(camera.position);
+                const intersects = downRaycaster.intersectObjects(collisionObjects);
+                if (intersects.length > 0) {
+                    const targetY = intersects[0].point.y + CONFIG.PLAYER_HEIGHT;
+                    // Yumuşak geçiş: Eğer fark çoksa merdiven çıkıyoruz demektir
+                    camera.position.y += (targetY - camera.position.y) * 0.15;
+                }
+
+                flashlight.position.copy(camera.position);
+                const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+                flashlight.target.position.copy(camera.position).add(dir);
+            }
+
+            updateGranny(delta);
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
