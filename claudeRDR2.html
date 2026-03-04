@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Dead Redemption 2 - Vahşi Batı</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            font-family: 'Georgia', serif;
+            background: linear-gradient(to bottom, #FF6B35 0%, #F7931E 50%, #C1666B 100%);
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #gameTitle {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 64px;
+            font-weight: bold;
+            color: #8B0000;
+            text-shadow:
+                4px 4px 8px rgba(0, 0, 0, 0.9),
+                0 0 30px #FFD700,
+                0 0 50px #FFD700,
+                0 0 70px #FF6B35;
+            letter-spacing: 8px;
+            z-index: 10;
+            pointer-events: none;
+            animation: titlePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+
+            0%,
+            100% {
+                text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.9), 0 0 30px #FFD700, 0 0 50px #FFD700;
+            }
+
+            50% {
+                text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.9), 0 0 40px #FFD700, 0 0 70px #FFD700, 0 0 90px #FF6B35;
+            }
+        }
+
+        #hud {
+            position: absolute;
+            top: 130px;
+            left: 30px;
+            color: white;
+            font-size: 20px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .bar {
+            margin: 20px 0;
+        }
+
+        .bar-label {
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-size: 18px;
+        }
+
+        .bar-container {
+            width: 300px;
+            height: 35px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 4px solid #8B4513;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.7);
+        }
+
+        .bar-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+            box-shadow: inset 0 3px 6px rgba(255, 255, 255, 0.4);
+        }
+
+        .health-bar {
+            background: linear-gradient(to right, #DC143C, #8B0000);
+        }
+
+        .ammo-bar {
+            background: linear-gradient(to right, #FFD700, #DAA520);
+        }
+
+        #damageOverlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 0, 0, 0);
+            pointer-events: none;
+            transition: background 0.3s;
+            z-index: 5;
+        }
+
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .crosshair-line {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.9);
+        }
+
+        .crosshair-h {
+            width: 25px;
+            height: 3px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .crosshair-v {
+            width: 3px;
+            height: 25px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #instructions {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 18px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
+            text-align: center;
+            z-index: 10;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px 40px;
+            border-radius: 15px;
+            border: 3px solid #8B4513;
+        }
+
+        #score {
+            position: absolute;
+            top: 130px;
+            right: 30px;
+            color: #FFD700;
+            font-size: 36px;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9), 0 0 15px #FFD700;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        #killStreak {
+            position: absolute;
+            top: 185px;
+            right: 30px;
+            color: #FF4500;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.9);
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="gameTitle">RED DEAD REDEMPTION 2</div>
+
+    <div id="hud">
+        <div class="bar">
+            <div class="bar-label">❤ Sağlık</div>
+            <div class="bar-container">
+                <div class="bar-fill health-bar" id="healthBar" style="width: 100%"></div>
+            </div>
+        </div>
+        <div class="bar">
+            <div class="bar-label">🔫 Mermi</div>
+            <div class="bar-container">
+                <div class="bar-fill ammo-bar" id="ammoBar" style="width: 100%"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="score">Skor: 0</div>
+    <div id="killStreak"></div>
+
+    <div id="crosshair">
+        <div class="crosshair-line crosshair-h"></div>
+        <div class="crosshair-line crosshair-v"></div>
+    </div>
+
+    <div id="instructions">
+        🎮 WASD: Hareket | SHIFT: Koş | SPACE: Ateş | E: Ata Bin/İn | Fare: Bakış
+    </div>
+
+    <div id="damageOverlay"></div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        let scene, camera, renderer, player, horse;
+        let enemies = [], bullets = [], rocks = [], cacti = [], trees = [];
+        let keys = {}, mouseX = 0, mouseY = 0;
+        let score = 0, killStreak = 0, lastKillTime = 0;
+        let playerHealth = 100, playerAmmo = 50;
+        let onHorse = false, isRunning = false;
+        let clock = new THREE.Clock();
+
+        // Initialization
+        function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0xD2691E, 50, 350);
+
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 12, 25);
+
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({
+                canvas: document.getElementById('gameCanvas'),
+                antialias: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            // Lighting - Sunset atmosphere
+            const ambientLight = new THREE.AmbientLight(0xFF8C42, 0.7);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xFFB347, 1.0);
+            sunLight.position.set(80, 120, 80);
+            sunLight.castShadow = true;
+            sunLight.shadow.camera.left = -150;
+            sunLight.shadow.camera.right = 150;
+            sunLight.shadow.camera.top = 150;
+            sunLight.shadow.camera.bottom = -150;
+            sunLight.shadow.mapSize.width = 2048;
+            sunLight.shadow.mapSize.height = 2048;
+            scene.add(sunLight);
+
+            // Rim light for dramatic effect
+            const rimLight = new THREE.DirectionalLight(0xFF6B35, 0.5);
+            rimLight.position.set(-50, 50, -50);
+            scene.add(rimLight);
+
+            // Ground with desert texture
+            const groundGeometry = new THREE.PlaneGeometry(600, 600, 60, 60);
+            const groundMaterial = new THREE.MeshStandardMaterial({
+                color: 0xDAA520,
+                roughness: 0.95,
+                metalness: 0.05
+            });
+
+            // Add terrain variation
+            const vertices = groundGeometry.attributes.position;
+            for (let i = 0; i < vertices.count; i++) {
+                const z = vertices.getZ(i);
+                vertices.setZ(i, z + Math.random() * 3 - 1.5);
+            }
+            groundGeometry.computeVertexNormals();
+
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // Sky gradient - Sunset colors
+            const skyGeometry = new THREE.SphereGeometry(500, 32, 32);
+            const skyMaterial = new THREE.ShaderMaterial({
+                vertexShader: `
+                    varying vec3 vPosition;
+                    void main() {
+                        vPosition = position;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vPosition;
+                    void main() {
+                        float h = normalize(vPosition).y;
+                        vec3 sunsetOrange = vec3(1.0, 0.42, 0.21);
+                        vec3 sunsetPurple = vec3(0.76, 0.4, 0.42);
+                        vec3 skyColor = mix(sunsetPurple, sunsetOrange, max(h, 0.0));
+                        gl_FragColor = vec4(skyColor, 1.0);
+                    }
+                `,
+                side: THREE.BackSide
+            });
+            const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+            scene.add(sky);
+
+            // Create player (Arthur)
+            createPlayer();
+
+            // Create horse
+            createHorse();
+
+            // Create environment
+            createEnvironment();
+
+            // Spawn initial enemies (O'Donnel Gang)
+            for (let i = 0; i < 6; i++) {
+                setTimeout(() => spawnEnemy(), i * 1500);
+            }
+
+            // Event listeners
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+            document.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('resize', onWindowResize);
+
+            animate();
+        }
+
+        function createPlayer() {
+            player = new THREE.Group();
+
+            // Body - Blue shirt (Arthur's signature)
+            const bodyGeometry = new THREE.BoxGeometry(1.6, 2.2, 1.1);
+            const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x4169E1 });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.position.y = 2;
+            body.castShadow = true;
+            player.add(body);
+
+            // Head
+            const headGeometry = new THREE.SphereGeometry(0.65, 16, 16);
+            const headMaterial = new THREE.MeshStandardMaterial({ color: 0xFFDBAC });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            head.position.y = 3.6;
+            head.castShadow = true;
+            player.add(head);
+
+            // Hat - Brown cowboy hat
+            const hatBrimGeometry = new THREE.CylinderGeometry(1.3, 1.3, 0.12, 16);
+            const hatMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+            const hatBrim = new THREE.Mesh(hatBrimGeometry, hatMaterial);
+            hatBrim.position.y = 4.1;
+            hatBrim.castShadow = true;
+            player.add(hatBrim);
+
+            const hatTopGeometry = new THREE.CylinderGeometry(0.75, 0.85, 0.9, 16);
+            const hatTop = new THREE.Mesh(hatTopGeometry, hatMaterial);
+            hatTop.position.y = 4.6;
+            hatTop.castShadow = true;
+            player.add(hatTop);
+
+            // Arms
+            const armGeometry = new THREE.BoxGeometry(0.45, 1.6, 0.45);
+            const armMaterial = new THREE.MeshStandardMaterial({ color: 0x4169E1 });
+
+            const leftArm = new THREE.Mesh(armGeometry, armMaterial);
+            leftArm.position.set(-1.1, 2, 0);
+            leftArm.castShadow = true;
+            player.add(leftArm);
+
+            const rightArm = new THREE.Mesh(armGeometry, armMaterial);
+            rightArm.position.set(1.1, 2, 0);
+            rightArm.castShadow = true;
+            player.add(rightArm);
+
+            // Gun - Revolver
+            const gunGeometry = new THREE.BoxGeometry(0.25, 0.25, 1.4);
+            const gunMaterial = new THREE.MeshStandardMaterial({
+                color: 0x2F4F4F,
+                metalness: 0.8,
+                roughness: 0.3
+            });
+            const gun = new THREE.Mesh(gunGeometry, gunMaterial);
+            gun.position.set(1.1, 2, -0.9);
+            gun.castShadow = true;
+            player.add(gun);
+
+            // Legs
+            const legGeometry = new THREE.BoxGeometry(0.5, 1.8, 0.5);
+            const legMaterial = new THREE.MeshStandardMaterial({ color: 0x654321 });
+
+            const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
+            leftLeg.position.set(-0.5, 0.9, 0);
+            leftLeg.castShadow = true;
+            player.add(leftLeg);
+
+            const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
+            rightLeg.position.set(0.5, 0.9, 0);
+            rightLeg.castShadow = true;
+            player.add(rightLeg);
+
+            player.position.set(0, 0, 0);
+            scene.add(player);
+        }
+
+        function createHorse() {
+            horse = new THREE.Group();
+
+            // Body
+            const bodyGeometry = new THREE.BoxGeometry(2.2, 1.7, 4);
+            const horseMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+            const body = new THREE.Mesh(bodyGeometry, horseMaterial);
+            body.position.y = 2.2;
+            body.castShadow = true;
+            horse.add(body);
+
+            // Head
+            const headGeometry = new THREE.BoxGeometry(0.9, 1.4, 1.4);
+            const head = new THREE.Mesh(headGeometry, horseMaterial);
+            head.position.set(0, 2.7, -2.8);
+            head.castShadow = true;
+            horse.add(head);
+
+            // Ears
+            const earGeometry = new THREE.ConeGeometry(0.2, 0.5, 4);
+            const leftEar = new THREE.Mesh(earGeometry, horseMaterial);
+            leftEar.position.set(-0.3, 3.5, -2.8);
+            leftEar.castShadow = true;
+            horse.add(leftEar);
+
+            const rightEar = new THREE.Mesh(earGeometry, horseMaterial);
+            rightEar.position.set(0.3, 3.5, -2.8);
+            rightEar.castShadow = true;
+            horse.add(rightEar);
+
+            // Neck
+            const neckGeometry = new THREE.BoxGeometry(1, 1.7, 0.9);
+            const neck = new THREE.Mesh(neckGeometry, horseMaterial);
+            neck.position.set(0, 3, -1.7);
+            neck.rotation.x = 0.4;
+            neck.castShadow = true;
+            horse.add(neck);
+
+            // Mane
+            const maneGeometry = new THREE.BoxGeometry(0.4, 0.8, 1.5);
+            const maneMaterial = new THREE.MeshStandardMaterial({ color: 0x654321 });
+            const mane = new THREE.Mesh(maneGeometry, maneMaterial);
+            mane.position.set(0, 3.5, -1.5);
+            mane.castShadow = true;
+            horse.add(mane);
+
+            // Legs
+            const legGeometry = new THREE.CylinderGeometry(0.28, 0.22, 2.2, 8);
+            const positions = [
+                [-0.8, 1.1, -1.4],
+                [0.8, 1.1, -1.4],
+                [-0.8, 1.1, 1.4],
+                [0.8, 1.1, 1.4]
+            ];
+
+            positions.forEach(pos => {
+                const leg = new THREE.Mesh(legGeometry, horseMaterial);
+                leg.position.set(...pos);
+                leg.castShadow = true;
+                horse.add(leg);
+            });
+
+            // Tail
+            const tailGeometry = new THREE.CylinderGeometry(0.15, 0.05, 2, 6);
+            const tail = new THREE.Mesh(tailGeometry, maneMaterial);
+            tail.position.set(0, 2.5, 2.5);
+            tail.rotation.x = 0.8;
+            tail.castShadow = true;
+            horse.add(tail);
+
+            horse.position.set(-12, 0, -12);
+            scene.add(horse);
+        }
+
+        function createEnvironment() {
+            // Rocks
+            for (let i = 0; i < 40; i++) {
+                const rockGroup = new THREE.Group();
+                const rockSize = Math.random() * 2.5 + 1;
+                const rockGeometry = new THREE.DodecahedronGeometry(rockSize, 0);
+                const rockMaterial = new THREE.MeshStandardMaterial({
+                    color: 0x696969,
+                    roughness: 0.95
+                });
+                const rock = new THREE.Mesh(rockGeometry, rockMaterial);
+                rock.castShadow = true;
+                rock.receiveShadow = true;
+                rockGroup.add(rock);
+
+                rockGroup.position.set(
+                    (Math.random() - 0.5) * 250,
+                    rockSize * 0.3,
+                    (Math.random() - 0.5) * 250
+                );
+                rockGroup.rotation.set(
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI
+                );
+                rocks.push(rockGroup);
+                scene.add(rockGroup);
+            }
+
+            // Cacti
+            for (let i = 0; i < 25; i++) {
+                const cactus = new THREE.Group();
+
+                const height = 3 + Math.random() * 2;
+                const trunkGeometry = new THREE.CylinderGeometry(0.35, 0.45, height, 8);
+                const cactusMaterial = new THREE.MeshStandardMaterial({ color: 0x2E7D32 });
+                const trunk = new THREE.Mesh(trunkGeometry, cactusMaterial);
+                trunk.position.y = height / 2;
+                trunk.castShadow = true;
+                cactus.add(trunk);
+
+                // Arms
+                if (Math.random() > 0.3) {
+                    const armGeometry = new THREE.CylinderGeometry(0.22, 0.28, 2.2, 8);
+                    const leftArm = new THREE.Mesh(armGeometry, cactusMaterial);
+                    leftArm.position.set(-0.7, height * 0.6, 0);
+                    leftArm.rotation.z = Math.PI / 3;
+                    leftArm.castShadow = true;
+                    cactus.add(leftArm);
+                }
+
+                if (Math.random() > 0.3) {
+                    const armGeometry = new THREE.CylinderGeometry(0.22, 0.28, 2.2, 8);
+                    const rightArm = new THREE.Mesh(armGeometry, cactusMaterial);
+                    rightArm.position.set(0.7, height * 0.6, 0);
+                    rightArm.rotation.z = -Math.PI / 3;
+                    rightArm.castShadow = true;
+                    cactus.add(rightArm);
+                }
+
+                cactus.position.set(
+                    (Math.random() - 0.5) * 250,
+                    0,
+                    (Math.random() - 0.5) * 250
+                );
+                cacti.push(cactus);
+                scene.add(cactus);
+            }
+
+            // Dead trees
+            for (let i = 0; i < 15; i++) {
+                const tree = new THREE.Group();
+
+                const trunkGeometry = new THREE.CylinderGeometry(0.4, 0.6, 6, 8);
+                const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x4A3728 });
+                const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                trunk.position.y = 3;
+                trunk.castShadow = true;
+                tree.add(trunk);
+
+                // Branches
+                for (let j = 0; j < 3; j++) {
+                    const branchGeometry = new THREE.CylinderGeometry(0.15, 0.2, 2.5, 6);
+                    const branch = new THREE.Mesh(branchGeometry, trunkMaterial);
+                    branch.position.set(
+                        (Math.random() - 0.5) * 1.5,
+                        4 + Math.random() * 2,
+                        (Math.random() - 0.5) * 1.5
+                    );
+                    branch.rotation.set(
+                        (Math.random() - 0.5) * 1,
+                        Math.random() * Math.PI * 2,
+                        (Math.random() - 0.5) * 1.5
+                    );
+                    branch.castShadow = true;
+                    tree.add(branch);
+                }
+
+                tree.position.set(
+                    (Math.random() - 0.5) * 250,
+                    0,
+                    (Math.random() - 0.5) * 250
+                );
+                trees.push(tree);
+                scene.add(tree);
+            }
+        }
+
+        function spawnEnemy() {
+            const enemy = new THREE.Group();
+
+            // Body - Dark clothing for O'Donnel Gang
+            const bodyGeometry = new THREE.BoxGeometry(1.5, 2, 1);
+            const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x2F4F4F });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.position.y = 2;
+            body.castShadow = true;
+            enemy.add(body);
+
+            // Head
+            const headGeometry = new THREE.SphereGeometry(0.6, 16, 16);
+            const headMaterial = new THREE.MeshStandardMaterial({ color: 0xFFDBAC });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            head.position.y = 3.5;
+            head.castShadow = true;
+            enemy.add(head);
+
+            // Hat - Black for enemies
+            const hatBrimGeometry = new THREE.CylinderGeometry(1.2, 1.2, 0.1, 16);
+            const hatMaterial = new THREE.MeshStandardMaterial({ color: 0x000000 });
+            const hatBrim = new THREE.Mesh(hatBrimGeometry, hatMaterial);
+            hatBrim.position.y = 4;
+            hatBrim.castShadow = true;
+            enemy.add(hatBrim);
+
+            const hatTopGeometry = new THREE.CylinderGeometry(0.7, 0.8, 0.8, 16);
+            const hatTop = new THREE.Mesh(hatTopGeometry, hatMaterial);
+            hatTop.position.y = 4.5;
+            hatTop.castShadow = true;
+            enemy.add(hatTop);
+
+            // Arms
+            const armGeometry = new THREE.BoxGeometry(0.4, 1.5, 0.4);
+            const armMaterial = new THREE.MeshStandardMaterial({ color: 0x2F4F4F });
+
+            const leftArm = new THREE.Mesh(armGeometry, armMaterial);
+            leftArm.position.set(-1, 2, 0);
+            leftArm.castShadow = true;
+            enemy.add(leftArm);
+
+            const rightArm = new THREE.Mesh(armGeometry, armMaterial);
+            rightArm.position.set(1, 2, 0);
+            rightArm.castShadow = true;
+            enemy.add(rightArm);
+
+            // Spawn position
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 45 + Math.random() * 35;
+            enemy.position.set(
+                player.position.x + Math.cos(angle) * distance,
+                0,
+                player.position.z + Math.sin(angle) * distance
+            );
+
+            enemy.userData.health = 3;
+            enemy.userData.speed = 0.06 + Math.random() * 0.04;
+            enemy.userData.isODonnel = true;
+
+            enemies.push(enemy);
+            scene.add(enemy);
+        }
+
+        function shoot() {
+            if (playerAmmo <= 0) return;
+
+            playerAmmo--;
+            updateAmmoBar();
+
+            const bullet = new THREE.Group();
+            const bulletGeometry = new THREE.SphereGeometry(0.25, 8, 8);
+            const bulletMaterial = new THREE.MeshStandardMaterial({
+                color: 0xFFD700,
+                emissive: 0xFFD700,
+                emissiveIntensity: 0.7
+            });
+            const bulletMesh = new THREE.Mesh(bulletGeometry, bulletMaterial);
+            bullet.add(bulletMesh);
+
+            bullet.position.copy(player.position);
+            bullet.position.y += 3.5;
+
+            const direction = new THREE.Vector3();
+            camera.getWorldDirection(direction);
+            bullet.userData.velocity = direction.multiplyScalar(2.5);
+            bullet.userData.lifetime = 0;
+
+            bullets.push(bullet);
+            scene.add(bullet);
+
+            // Muzzle flash
+            const flash = new THREE.PointLight(0xFFD700, 3, 15);
+            flash.position.copy(bullet.position);
+            scene.add(flash);
+            setTimeout(() => scene.remove(flash), 60);
+        }
+
+        function updateEnemies(delta) {
+            enemies.forEach((enemy, index) => {
+                const direction = new THREE.Vector3();
+                direction.subVectors(player.position, enemy.position);
+                direction.y = 0;
+                direction.normalize();
+
+                enemy.position.add(direction.multiplyScalar(enemy.userData.speed));
+                enemy.lookAt(player.position.x, enemy.position.y, player.position.z);
+
+                // Enemy attack
+                const dist = enemy.position.distanceTo(player.position);
+                if (dist < 6 && Math.random() < 0.015) {
+                    playerHealth -= 5;
+                    updateHealthBar();
+                    showDamage();
+
+                    if (playerHealth <= 0) {
+                        gameOver();
+                    }
+                }
+            });
+        }
+
+        function updateBullets(delta) {
+            bullets.forEach((bullet, bIndex) => {
+                bullet.position.add(bullet.userData.velocity);
+                bullet.userData.lifetime += delta;
+
+                if (bullet.userData.lifetime > 3.5) {
+                    scene.remove(bullet);
+                    bullets.splice(bIndex, 1);
+                    return;
+                }
+
+                enemies.forEach((enemy, eIndex) => {
+                    const dist = bullet.position.distanceTo(enemy.position);
+                    if (dist < 2.5) {
+                        enemy.userData.health--;
+                        scene.remove(bullet);
+                        bullets.splice(bIndex, 1);
+
+                        // Hit effect
+                        createHitEffect(enemy.position);
+
+                        if (enemy.userData.health <= 0) {
+                            scene.remove(enemy);
+                            enemies.splice(eIndex, 1);
+                            score += 10;
+                            killStreak++;
+                            lastKillTime = Date.now();
+
+                            document.getElementById('score').textContent = 'Skor: ' + score;
+
+                            const streakEl = document.getElementById('killStreak');
+                            streakEl.textContent = `🔥 ${killStreak}x COMBO!`;
+                            streakEl.style.opacity = '1';
+
+                            // Ammo drop chance
+                            if (Math.random() < 0.45) {
+                                playerAmmo = Math.min(50, playerAmmo + 6);
+                                updateAmmoBar();
+                            }
+
+                            // Spawn new enemy
+                            setTimeout(spawnEnemy, 2500);
+                        }
+                    }
+                });
+            });
+
+            // Reset kill streak
+            if (Date.now() - lastKillTime > 3500) {
+                killStreak = 0;
+                document.getElementById('killStreak').style.opacity = '0';
+            }
+        }
+
+        function createHitEffect(position) {
+            for (let i = 0; i < 12; i++) {
+                const particle = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.12, 4, 4),
+                    new THREE.MeshBasicMaterial({ color: 0xFF0000 })
+                );
+                particle.position.copy(position);
+                particle.userData.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.4,
+                    Math.random() * 0.4,
+                    (Math.random() - 0.5) * 0.4
+                );
+                particle.userData.lifetime = 0;
+                scene.add(particle);
+
+                setTimeout(() => {
+                    const interval = setInterval(() => {
+                        particle.position.add(particle.userData.velocity);
+                        particle.userData.velocity.y -= 0.015;
+                        particle.userData.lifetime += 0.016;
+
+                        if (particle.userData.lifetime > 1.2) {
+                            scene.remove(particle);
+                            clearInterval(interval);
+                        }
+                    }, 16);
+                }, 0);
+            }
+        }
+
+        function updateHealthBar() {
+            const healthPercent = Math.max(0, playerHealth / 100 * 100);
+            document.getElementById('healthBar').style.width = healthPercent + '%';
+        }
+
+        function updateAmmoBar() {
+            const ammoPercent = Math.max(0, playerAmmo / 50 * 100);
+            document.getElementById('ammoBar').style.width = ammoPercent + '%';
+        }
+
+        function showDamage() {
+            const overlay = document.getElementById('damageOverlay');
+            overlay.style.background = 'rgba(255, 0, 0, 0.5)';
+            setTimeout(() => {
+                overlay.style.background = 'rgba(255, 0, 0, 0)';
+            }, 250);
+        }
+
+        function gameOver() {
+            const overlay = document.getElementById('damageOverlay');
+            overlay.style.background = 'rgba(0, 0, 0, 0.85)';
+            overlay.innerHTML = `
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                    <div style="color: #DC143C; font-size: 80px; font-weight: bold; text-shadow: 0 0 30px #DC143C;">ÖLDÜN</div>
+                    <div style="color: #FFD700; font-size: 40px; margin-top: 25px; text-shadow: 0 0 15px #FFD700;">Final Skor: ${score}</div>
+                    <div style="color: white; font-size: 24px; margin-top: 25px;">Sayfayı yenileyin (F5)</div>
+                </div>
+            `;
+        }
+
+        function onKeyDown(e) {
+            keys[e.key.toLowerCase()] = true;
+
+            if (e.key === ' ') {
+                e.preventDefault();
+                shoot();
+            }
+
+            if (e.key.toLowerCase() === 'e') {
+                const dist = player.position.distanceTo(horse.position);
+                if (dist < 6) {
+                    onHorse = !onHorse;
+                }
+            }
+
+            if (e.key === 'Shift') {
+                isRunning = true;
+            }
+        }
+
+        function onKeyUp(e) {
+            keys[e.key.toLowerCase()] = false;
+
+            if (e.key === 'Shift') {
+                isRunning = false;
+            }
+        }
+
+        function onMouseMove(e) {
+            mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+
+            // Player movement
+            const speed = (onHorse ? 0.35 : 0.18) * (isRunning ? 1.6 : 1);
+            const moveDirection = new THREE.Vector3();
+
+            if (keys['w'] || keys['arrowup']) moveDirection.z -= 1;
+            if (keys['s'] || keys['arrowdown']) moveDirection.z += 1;
+            if (keys['a'] || keys['arrowleft']) moveDirection.x -= 1;
+            if (keys['d'] || keys['arrowright']) moveDirection.x += 1;
+
+            if (moveDirection.length() > 0) {
+                moveDirection.normalize();
+                const cameraDirection = new THREE.Vector3();
+                camera.getWorldDirection(cameraDirection);
+                cameraDirection.y = 0;
+                cameraDirection.normalize();
+
+                const right = new THREE.Vector3();
+                right.crossVectors(cameraDirection, new THREE.Vector3(0, 1, 0));
+
+                const movement = new THREE.Vector3();
+                movement.addScaledVector(cameraDirection, -moveDirection.z);
+                movement.addScaledVector(right, moveDirection.x);
+                movement.multiplyScalar(speed);
+
+                player.position.add(movement);
+
+                if (onHorse) {
+                    horse.position.copy(player.position);
+                }
+            }
+
+            // Camera follow
+            const cameraOffset = new THREE.Vector3(
+                Math.sin(mouseX * 0.5) * 15,
+                12 + mouseY * 5,
+                Math.cos(mouseX * 0.5) * 15 + 25
+            );
+            camera.position.x = player.position.x + cameraOffset.x;
+            camera.position.y = player.position.y + cameraOffset.y;
+            camera.position.z = player.position.z + cameraOffset.z;
+            camera.lookAt(player.position.x, player.position.y + 2, player.position.z);
+
+            // Update game elements
+            updateEnemies(delta);
+            updateBullets(delta);
+
+            renderer.render(scene, camera);
+        }
+
+        // Start the game
+        init();
+    </script>
+</body>
+
+</html>
