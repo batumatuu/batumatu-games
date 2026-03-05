@@ -2,139 +2,456 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kafa Topu AI - Pro Edition (Fix)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1a5276">
+    <title>Kafa Topu Pro - Ultimate Edition</title>
     <style>
-        /* CSS STİLLERİ */
+        :root {
+            --vh: 1vh;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left: env(safe-area-inset-left, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+        }
+
+        html {
+            height: 100%;
+            height: -webkit-fill-available;
+            overflow: hidden;
+        }
+
         body {
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background-color: #2c3e50;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: none; 
-            user-select: none;
+            background: linear-gradient(180deg, #1a5276 0%, #2980b9 30%, #85c1e9 60%, #2ecc71 60%, #27ae60 100%);
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            touch-action: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            height: -webkit-fill-available;
+            overscroll-behavior: none;
         }
 
         #gameCanvas {
             display: block;
-            margin: 0 auto;
-            background: linear-gradient(to bottom, #2980b9 0%, #6dd5fa 50%, #27ae60 50%, #2ecc71 100%);
+            width: 100%;
+            height: 100%;
+            height: calc(var(--vh, 1vh) * 100);
+            touch-action: none;
         }
 
-        /* ARAYÜZ KATMANLARI */
+        /* ===== UI LAYER ===== */
         #ui-layer {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            height: calc(var(--vh, 1vh) * 100);
             pointer-events: none;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            z-index: 10;
         }
 
-        /* SKOR TABLOSU */
+        /* ===== SCOREBOARD ===== */
         #scoreboard {
             display: flex;
             justify-content: center;
             align-items: center;
-            padding-top: 20px;
-            color: white;
-            text-shadow: 2px 2px 4px #000;
-            font-size: 32px;
-            font-weight: 800;
-            font-family: 'Courier New', Courier, monospace;
+            padding-top: max(15px, var(--safe-top));
+            gap: clamp(10px, 3vw, 20px);
         }
 
         .score-box {
-            background: rgba(0,0,0,0.6);
-            padding: 5px 25px;
-            border-radius: 10px;
-            margin: 0 15px;
-            border: 2px solid rgba(255,255,255,0.2);
+            background: rgba(0, 0, 0, 0.7);
+            padding: clamp(8px, 2vw, 15px) clamp(20px, 5vw, 40px);
+            border-radius: clamp(8px, 2vw, 15px);
+            color: white;
+            font-size: clamp(24px, 6vw, 48px);
+            font-weight: 900;
+            font-family: 'Courier New', monospace;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            border: 3px solid rgba(255,255,255,0.2);
+            min-width: clamp(60px, 15vw, 100px);
+            text-align: center;
+        }
+
+        .score-box.player1 {
+            border-bottom: 4px solid #e74c3c;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .score-box.player2 {
+            border-bottom: 4px solid #3498db;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
         }
 
         #timer {
-            background: #e67e22;
+            background: linear-gradient(135deg, #e67e22, #d35400);
             color: #fff;
-            width: 50px;
-            height: 50px;
+            width: clamp(45px, 12vw, 70px);
+            height: clamp(45px, 12vw, 70px);
             display: flex;
             justify-content: center;
             align-items: center;
             border-radius: 50%;
             border: 4px solid #fff;
-            box-shadow: 0 4px 0 #d35400;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3), inset 0 2px 5px rgba(255,255,255,0.3);
+            font-size: clamp(16px, 4vw, 28px);
+            font-weight: 900;
         }
 
-        /* EKRANLAR */
-        #intro-screen, #game-over-screen {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
+        #timer.warning {
+            background: linear-gradient(135deg, #c0392b, #e74c3c);
+            animation: timerPulse 0.5s infinite;
+        }
+
+        @keyframes timerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* ===== TEAM NAMES ===== */
+        .team-label {
+            font-size: clamp(10px, 2.5vw, 14px);
+            color: rgba(255,255,255,0.8);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 3px;
+            text-align: center;
+        }
+
+        /* ===== SCREENS ===== */
+        .game-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            height: calc(var(--vh, 1vh) * 100);
+            background: rgba(0, 0, 0, 0.9);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            color: white;
-            z-index: 10;
+            z-index: 100;
             pointer-events: auto;
+            padding: 20px;
+            text-align: center;
         }
 
-        h1 { font-size: 48px; margin-bottom: 10px; text-transform: uppercase; color: #f1c40f; text-shadow: 0 5px 0 #d35400; letter-spacing: 2px; }
-        p { font-size: 20px; color: #ecf0f1; margin-bottom: 30px; }
-        
+        .game-screen h1 {
+            font-size: clamp(32px, 10vw, 64px);
+            color: #f1c40f;
+            text-transform: uppercase;
+            text-shadow: 0 4px 0 #d35400, 0 8px 20px rgba(0,0,0,0.5);
+            letter-spacing: clamp(2px, 0.5vw, 5px);
+            margin-bottom: 10px;
+            animation: titleBounce 1s ease-in-out infinite;
+        }
+
+        @keyframes titleBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .game-screen .subtitle {
+            font-size: clamp(14px, 3.5vw, 24px);
+            color: #ecf0f1;
+            margin-bottom: 20px;
+        }
+
+        .game-screen .controls-info {
+            font-size: clamp(11px, 2.5vw, 16px);
+            color: #bdc3c7;
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+
+        .game-screen .controls-info span {
+            background: rgba(255,255,255,0.1);
+            padding: 3px 10px;
+            border-radius: 5px;
+            margin: 2px;
+            display: inline-block;
+        }
+
         .btn {
-            padding: 15px 50px;
-            font-size: 24px;
-            font-weight: bold;
-            background: #e74c3c;
+            padding: clamp(12px, 3vw, 20px) clamp(35px, 10vw, 70px);
+            font-size: clamp(18px, 4vw, 28px);
+            font-weight: 900;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
             color: white;
             border: none;
             border-radius: 50px;
             cursor: pointer;
-            box-shadow: 0 6px 0 #c0392b;
+            box-shadow: 0 6px 0 #922b21, 0 10px 30px rgba(0,0,0,0.3);
             transition: all 0.1s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            touch-action: manipulation;
+            min-height: 50px;
         }
-        .btn:active { transform: translateY(6px); box-shadow: none; }
 
-        /* MOBİL KONTROLLER */
+        .btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 0 0 #922b21, 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* ===== RESULT SCREEN ===== */
+        .result-icon {
+            font-size: clamp(60px, 15vw, 100px);
+            margin-bottom: 15px;
+        }
+
+        .result-score {
+            font-size: clamp(28px, 8vw, 48px);
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .result-score .vs {
+            color: #7f8c8d;
+            margin: 0 15px;
+        }
+
+        /* ===== MOBILE CONTROLS ===== */
         #mobile-controls {
             display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
             width: 100%;
-            height: 160px;
-            position: absolute;
-            bottom: 20px;
-            pointer-events: auto;
+            padding: max(15px, var(--safe-bottom)) max(15px, var(--safe-left));
+            padding-right: max(15px, var(--safe-right));
             justify-content: space-between;
-            padding: 0 30px;
-            box-sizing: border-box;
+            align-items: flex-end;
+            pointer-events: none;
+            z-index: 20;
         }
 
-        .control-group { display: flex; gap: 25px; align-items: flex-end; }
-        
+        .mobile-visible #mobile-controls {
+            display: flex;
+        }
+
+        .control-group {
+            display: flex;
+            gap: clamp(10px, 2.5vw, 20px);
+            align-items: flex-end;
+            pointer-events: auto;
+        }
+
         .touch-btn {
-            width: 75px;
-            height: 75px;
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.5);
+            width: clamp(55px, 14vw, 80px);
+            height: clamp(55px, 14vw, 80px);
+            background: rgba(255, 255, 255, 0.15);
+            border: 3px solid rgba(255, 255, 255, 0.4);
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 30px;
+            font-size: clamp(20px, 5vw, 32px);
             color: white;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+            transition: transform 0.1s, background 0.1s;
+            touch-action: none;
         }
-        .touch-btn:active { background: rgba(255, 255, 255, 0.5); transform: scale(0.95); }
-        #btn-shoot { background: rgba(231, 76, 60, 0.4); border-color: #e74c3c; } 
 
-        @media (max-width: 768px) {
-            h1 { font-size: 32px; }
-            #scoreboard { font-size: 24px; }
+        .touch-btn:active {
+            background: rgba(255, 255, 255, 0.35);
+            transform: scale(0.9);
+        }
+
+        .touch-btn.active {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(0.92);
+        }
+
+        #btn-left, #btn-right {
+            background: rgba(52, 152, 219, 0.3);
+            border-color: rgba(52, 152, 219, 0.6);
+        }
+
+        #btn-jump {
+            background: rgba(46, 204, 113, 0.3);
+            border-color: rgba(46, 204, 113, 0.6);
+        }
+
+        #btn-shoot {
+            width: clamp(70px, 18vw, 100px);
+            height: clamp(70px, 18vw, 100px);
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.5), rgba(192, 57, 43, 0.5));
+            border-color: #e74c3c;
+            box-shadow: 0 4px 20px rgba(231, 76, 60, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        #btn-shoot:active {
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.8), rgba(192, 57, 43, 0.8));
+        }
+
+        /* Direction buttons layout */
+        .direction-buttons {
+            display: flex;
+            gap: clamp(8px, 2vw, 15px);
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(8px, 2vw, 15px);
+            align-items: center;
+        }
+
+        .action-row {
+            display: flex;
+            gap: clamp(8px, 2vw, 15px);
+        }
+
+        /* ===== GOAL CELEBRATION ===== */
+        #goal-celebration {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(48px, 15vw, 100px);
+            font-weight: 900;
+            color: #f1c40f;
+            text-shadow: 0 4px 0 #d35400, 0 8px 30px rgba(0,0,0,0.5);
+            z-index: 50;
+            pointer-events: none;
+            opacity: 0;
+            animation: goalAnim 1.5s ease-out forwards;
+        }
+
+        @keyframes goalAnim {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            40% { transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+        }
+
+        /* ===== PAUSE BUTTON ===== */
+        #pause-btn {
+            position: fixed;
+            top: max(15px, var(--safe-top));
+            right: max(15px, var(--safe-right));
+            width: clamp(40px, 10vw, 55px);
+            height: clamp(40px, 10vw, 55px);
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: clamp(16px, 4vw, 24px);
+            color: white;
+            pointer-events: auto;
+            z-index: 25;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        /* ===== LANDSCAPE PHONE ===== */
+        @media (max-height: 500px) and (orientation: landscape) {
+            #scoreboard {
+                padding-top: max(8px, var(--safe-top));
+            }
+
+            .score-box {
+                padding: 5px 15px;
+                font-size: clamp(18px, 4vw, 28px);
+                min-width: 50px;
+            }
+
+            #timer {
+                width: clamp(35px, 8vw, 50px);
+                height: clamp(35px, 8vw, 50px);
+                font-size: clamp(12px, 3vw, 18px);
+            }
+
+            .touch-btn {
+                width: clamp(45px, 10vw, 60px);
+                height: clamp(45px, 10vw, 60px);
+                font-size: clamp(16px, 4vw, 24px);
+            }
+
+            #btn-shoot {
+                width: clamp(55px, 12vw, 70px);
+                height: clamp(55px, 12vw, 70px);
+            }
+
+            #mobile-controls {
+                padding-bottom: max(10px, var(--safe-bottom));
+            }
+
+            .game-screen h1 {
+                font-size: clamp(24px, 6vw, 40px);
+            }
+
+            .btn {
+                padding: 10px 30px;
+                font-size: clamp(14px, 3vw, 20px);
+            }
+        }
+
+        /* ===== PORTRAIT PHONE ===== */
+        @media (max-width: 480px) and (orientation: portrait) {
+            .touch-btn {
+                width: clamp(60px, 16vw, 75px);
+                height: clamp(60px, 16vw, 75px);
+            }
+
+            #btn-shoot {
+                width: clamp(75px, 20vw, 95px);
+                height: clamp(75px, 20vw, 95px);
+            }
+        }
+
+        /* ===== TABLET ===== */
+        @media (min-width: 768px) {
+            .touch-btn {
+                width: 80px;
+                height: 80px;
+            }
+
+            #btn-shoot {
+                width: 100px;
+                height: 100px;
+            }
+        }
+
+        /* ===== HIDE MOBILE ON DESKTOP ===== */
+        @media (hover: hover) and (pointer: fine) {
+            #mobile-controls {
+                display: none !important;
+            }
+            #pause-btn {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -144,178 +461,365 @@
 
     <div id="ui-layer">
         <div id="scoreboard">
-            <div class="score-box" style="border-bottom: 4px solid #e74c3c" id="p1-score">0</div>
-            <div id="timer">60</div>
-            <div class="score-box" style="border-bottom: 4px solid #3498db" id="p2-score">0</div>
-        </div>
-
-        <div id="mobile-controls">
-            <div class="control-group">
-                <div class="touch-btn" id="btn-left">◀</div>
-                <div class="touch-btn" id="btn-right">▶</div>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <div class="team-label">Oyuncu</div>
+                <div class="score-box player1" id="p1-score">0</div>
             </div>
-            <div class="control-group">
-                <div class="touch-btn" id="btn-jump">▲</div>
-                <div class="touch-btn" id="btn-shoot">👟</div>
+            <div id="timer">90</div>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <div class="team-label">Rakip</div>
+                <div class="score-box player2" id="p2-score">0</div>
             </div>
         </div>
     </div>
 
-    <div id="intro-screen">
-        <h1>Kafa Topu Pro</h1>
-        <p>A-D: Hareket | W: Zıpla | SPACE: Şut Çek</p>
-        <button class="btn" onclick="startGame()">MAÇA BAŞLA</button>
+    <div id="mobile-controls">
+        <div class="control-group direction-buttons">
+            <div class="touch-btn" id="btn-left">◀</div>
+            <div class="touch-btn" id="btn-right">▶</div>
+        </div>
+        <div class="control-group action-buttons">
+            <div class="touch-btn" id="btn-jump">▲</div>
+            <div class="action-row">
+                <div class="touch-btn" id="btn-shoot">⚽</div>
+            </div>
+        </div>
     </div>
 
-    <div id="game-over-screen" style="display: none;">
-        <h1 id="winner-text">OYUN BİTTİ</h1>
-        <button class="btn" onclick="resetGame()">TEKRAR OYNA</button>
+    <div id="pause-btn">⏸</div>
+
+    <div id="goal-celebration" style="display:none;">GOL!</div>
+
+    <!-- INTRO SCREEN -->
+    <div class="game-screen" id="intro-screen">
+        <h1>⚽ Kafa Topu</h1>
+        <div class="subtitle">Pro Edition</div>
+        <div class="controls-info">
+            <strong>PC:</strong> <span>A/D</span> Hareket <span>W</span> Zıpla <span>SPACE</span> Şut<br>
+            <strong>Mobil:</strong> Ekran butonlarını kullan
+        </div>
+        <button class="btn" id="start-btn">⚡ MAÇA BAŞLA</button>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
+    <div class="game-screen" id="game-over-screen" style="display:none;">
+        <div class="result-icon" id="result-icon">🏆</div>
+        <h1 id="winner-text">KAZANDIN!</h1>
+        <div class="result-score">
+            <span id="final-p1">0</span>
+            <span class="vs">-</span>
+            <span id="final-p2">0</span>
+        </div>
+        <button class="btn" id="restart-btn">🔄 TEKRAR OYNA</button>
+    </div>
+
+    <!-- PAUSE SCREEN -->
+    <div class="game-screen" id="pause-screen" style="display:none;">
+        <h1>⏸ DURAKLADI</h1>
+        <button class="btn" id="resume-btn" style="margin-bottom:15px;">▶ DEVAM ET</button>
+        <button class="btn" id="quit-btn" style="background:linear-gradient(135deg,#7f8c8d,#636e72);box-shadow:0 6px 0 #4a5459;">🚪 ÇIKIŞ</button>
     </div>
 
     <script>
-        // --- AYARLAR VE SABİTLER ---
+        // ===== DEVICE DETECTION =====
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        const isMobile = isIOS || isAndroid ||
+            ('ontouchstart' in window && navigator.maxTouchPoints > 1) ||
+            (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
+
+        // ===== VIEWPORT FIX =====
+        function setVH() {
+            const vh = window.visualViewport 
+                ? window.visualViewport.height * 0.01 
+                : window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+        setVH();
+        window.addEventListener('resize', setVH);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(setVH, 100);
+            setTimeout(setVH, 300);
+        });
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', setVH);
+        }
+
+        // Add mobile class
+        if (isMobile) {
+            document.body.classList.add('mobile-visible');
+        }
+
+        // Prevent gestures
+        document.addEventListener('touchmove', e => {
+            if (e.touches.length > 1) e.preventDefault();
+        }, { passive: false });
+        document.addEventListener('gesturestart', e => e.preventDefault());
+
+        // ===== CANVAS & CONTEXT =====
         const CANVAS = document.getElementById('gameCanvas');
         const CTX = CANVAS.getContext('2d');
-        
-        // FİZİK AYARLARI
-        const GRAVITY = 0.5;
-        const FRICTION = 0.88;
-        const GROUND_Y_OFFSET = 120;
+
+        // ===== PHYSICS =====
+        const GRAVITY = 0.45;
+        const FRICTION = 0.89;
         let GROUND_Y;
         const GAME_DURATION = 90;
+        
+        function getGroundYOffset() {
+            const h = window.innerHeight;
+            const w = window.innerWidth;
+            const isLandscape = w > h;
+            if (isMobile && isLandscape) {
+                return Math.min(80, h * 0.2);
+            } else if (isMobile) {
+                return Math.min(180, h * 0.25);
+            }
+            return Math.min(140, h * 0.2);
+        }
 
-        // --- SES MOTORU ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            const now = audioCtx.currentTime;
+        // ===== AUDIO ENGINE =====
+        let audioCtx = null;
 
-            if (type === 'kick') { // Sert şut
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(100, now);
-                osc.frequency.exponentialRampToValueAtTime(10, now + 0.15);
-                gainNode.gain.setValueAtTime(0.5, now);
-                gainNode.gain.linearRampToValueAtTime(0, now + 0.15);
-                osc.start(now);
-                osc.stop(now + 0.15);
-            } else if (type === 'bump') { // Kafa/Vücut
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(80, now);
-                gainNode.gain.setValueAtTime(0.3, now);
-                gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
-                osc.start(now);
-                osc.stop(now + 0.1);
-            } else if (type === 'jump') { // Zıplama (Eklendi)
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(200, now);
-                osc.frequency.exponentialRampToValueAtTime(400, now + 0.1);
-                gainNode.gain.setValueAtTime(0.2, now);
-                gainNode.gain.linearRampToValueAtTime(0, now + 0.1);
-                osc.start(now);
-                osc.stop(now + 0.1);
-            } else if (type === 'goal') { // Gol
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(400, now);
-                osc.frequency.linearRampToValueAtTime(800, now + 0.5);
-                gainNode.gain.setValueAtTime(0.4, now);
-                gainNode.gain.linearRampToValueAtTime(0, now + 1.5);
-                osc.start(now);
-                osc.stop(now + 1.5);
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
             }
         }
 
-        // --- SINIFLAR ---
+        function vibrate(pattern = 10) {
+            if ('vibrate' in navigator) {
+                navigator.vibrate(pattern);
+            }
+        }
 
+        // Ses throttle sistemi - aynı sesin art arda spam edilmesini önler
+        const _soundLastPlay = {};
+        const _soundCooldown = { bump: 150, kick: 200, jump: 100, goal: 1000, whistle: 1000 };
+
+        function playSound(type) {
+            if (!audioCtx) return;
+
+            // Throttle - aynı ses çok sık çalmasın
+            const now = performance.now();
+            const cd = _soundCooldown[type] || 100;
+            if (_soundLastPlay[type] && now - _soundLastPlay[type] < cd) return;
+            _soundLastPlay[type] = now;
+
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const t = audioCtx.currentTime;
+
+                // Goal sesi ayrı - kendi oscillator'larını yaratır
+                if (type === 'goal') {
+                    [400, 500, 600, 800].forEach((freq, i) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.connect(g);
+                        g.connect(audioCtx.destination);
+                        o.type = 'triangle';
+                        o.frequency.value = freq;
+                        g.gain.setValueAtTime(0.2, t + i * 0.12);
+                        g.gain.linearRampToValueAtTime(0, t + i * 0.12 + 0.4);
+                        o.start(t + i * 0.12);
+                        o.stop(t + i * 0.12 + 0.4);
+                    });
+                    vibrate([50, 30, 50, 30, 100]);
+                    return;
+                }
+
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                switch(type) {
+                    case 'kick':
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(150, t);
+                        osc.frequency.exponentialRampToValueAtTime(30, t + 0.12);
+                        gainNode.gain.setValueAtTime(0.4, t);
+                        gainNode.gain.linearRampToValueAtTime(0, t + 0.12);
+                        osc.start(t);
+                        osc.stop(t + 0.12);
+                        vibrate(20);
+                        break;
+                    case 'bump':
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(100, t);
+                        osc.frequency.exponentialRampToValueAtTime(60, t + 0.08);
+                        gainNode.gain.setValueAtTime(0.25, t);
+                        gainNode.gain.linearRampToValueAtTime(0, t + 0.08);
+                        osc.start(t);
+                        osc.stop(t + 0.08);
+                        vibrate(10);
+                        break;
+                    case 'jump':
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(250, t);
+                        osc.frequency.exponentialRampToValueAtTime(450, t + 0.1);
+                        gainNode.gain.setValueAtTime(0.15, t);
+                        gainNode.gain.linearRampToValueAtTime(0, t + 0.1);
+                        osc.start(t);
+                        osc.stop(t + 0.1);
+                        vibrate(8);
+                        break;
+                    case 'whistle':
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(800, t);
+                        osc.frequency.setValueAtTime(900, t + 0.1);
+                        osc.frequency.setValueAtTime(800, t + 0.2);
+                        gainNode.gain.setValueAtTime(0.3, t);
+                        gainNode.gain.linearRampToValueAtTime(0, t + 0.5);
+                        osc.start(t);
+                        osc.stop(t + 0.5);
+                        break;
+                }
+            } catch(e) {
+                // Ses hatası - oyunu çökertme
+            }
+        }
+
+        // ===== PARTICLE SYSTEM =====
         class Particle {
-            constructor(x, y, color, speed) {
-                this.x = x; this.y = y; this.color = color;
+            constructor(x, y, color, speed, size = 4) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
                 this.vx = (Math.random() - 0.5) * speed;
-                this.vy = (Math.random() - 0.5) * speed;
+                this.vy = (Math.random() - 0.5) * speed - 2;
+                this.size = size;
                 this.life = 1.0;
+                this.gravity = 0.15;
             }
             update() {
-                this.x += this.vx; this.y += this.vy;
-                this.life -= 0.04;
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += this.gravity;
+                this.life -= 0.03;
             }
             draw() {
                 CTX.globalAlpha = this.life;
                 CTX.fillStyle = this.color;
                 CTX.beginPath();
-                CTX.arc(this.x, this.y, 4, 0, Math.PI*2);
+                CTX.arc(this.x, this.y, this.size * this.life, 0, Math.PI * 2);
                 CTX.fill();
                 CTX.globalAlpha = 1.0;
             }
         }
 
+        // ===== PLAYER CLASS (KAFA TOPU STYLE) =====
         class Player {
-            constructor(x, isAI, color, side) {
-                this.x = x; this.y = 0;
-                this.vx = 0; this.vy = 0;
-                this.radius = 35; 
-                this.width = 40; this.height = 60;
-                this.color = color;
+            constructor(x, isAI, teamColor, skinColor, hairColor, hairStyle, side) {
+                this.x = x;
+                this.y = 0;
+                this.vx = 0;
+                this.vy = 0;
+                
+                // Kafa Topu dimensions - BIG HEAD! (baz değerler, draw'da CTX.scale ile ölçeklenir)
+                this.headRadius = 40;
+                this.bodyWidth = 30;
+                this.bodyHeight = 45;
+                
+                // Colors
+                this.teamColor = teamColor;
+                this.skinColor = skinColor;
+                this.hairColor = hairColor;
+                this.hairStyle = hairStyle; // 'short', 'spiky', 'mohawk', 'bald'
+                
                 this.isAI = isAI;
-                this.side = side; 
-                this.speed = 5.0; 
-                this.jumpPower = -12.5; 
+                this.side = side; // 1 = left, -1 = right
+                
+                // Stats
+                this.speed = 5.5;
+                this.jumpPower = -13;
                 this.grounded = false;
                 
-                // Tekme Değişkenleri
+                // Kick animation
                 this.isKicking = false;
                 this.kickAngle = 0;
+                this.kickLeg = 0; // For running animation
+                
+                // Expression
+                this.expression = 'normal'; // 'normal', 'happy', 'effort'
+                this.blinkTimer = 0;
+                this.isBlinking = false;
             }
 
             update(ball) {
+                // Physics
                 this.vy += GRAVITY;
                 this.x += this.vx;
                 this.y += this.vy;
 
-                // Zemin
-                if (this.y + this.height/2 > GROUND_Y) {
-                    this.y = GROUND_Y - this.height/2;
+                // Ground collision - ölçeklenmiş ayak pozisyonu
+                const s = window._playerScale || 1;
+                const footOffset = (45 / 2 + 20) * s; // base bodyHeight/2 + leg length, scaled
+                if (this.y + footOffset > GROUND_Y) {
+                    this.y = GROUND_Y - footOffset;
                     this.vy = 0;
                     this.grounded = true;
                 } else {
                     this.grounded = false;
                 }
 
-                // Duvarlar
-                if (this.x < 35) this.x = 35;
-                if (this.x > CANVAS.width - 35) this.x = CANVAS.width - 35;
+                // Wall boundaries
+                const margin = 40;
+                if (this.x < margin) this.x = margin;
+                if (this.x > CANVAS.width - margin) this.x = CANVAS.width - margin;
 
-                // Sürtünme
+                // Friction
                 this.vx *= FRICTION;
 
-                // Tekme Animasyonu
-                if (this.isKicking) {
-                    this.kickAngle += 0.4; 
-                    if (this.kickAngle > 1.5) { 
-                        this.isKicking = false; 
-                    }
+                // Running animation
+                if (Math.abs(this.vx) > 0.5 && this.grounded) {
+                    this.kickLeg += 0.3;
                 } else {
-                    if (this.kickAngle > 0) this.kickAngle -= 0.15;
-                    if (this.kickAngle < 0) this.kickAngle = 0;
+                    this.kickLeg *= 0.8;
                 }
 
+                // Kick animation
+                if (this.isKicking) {
+                    this.kickAngle += 0.4;
+                    if (this.kickAngle > 1.8) {
+                        this.isKicking = false;
+                    }
+                } else {
+                    this.kickAngle *= 0.8;
+                }
+
+                // Blinking
+                this.blinkTimer++;
+                if (this.blinkTimer > 150 && !this.isBlinking) {
+                    this.isBlinking = true;
+                    setTimeout(() => {
+                        this.isBlinking = false;
+                        this.blinkTimer = 0;
+                    }, 100);
+                }
+
+                // AI Logic
                 if (this.isAI) this.aiLogic(ball);
             }
 
-            // --- DÜZELTİLEN KISIM: jump() FONKSİYONU EKLENDİ ---
             jump() {
                 if (this.grounded) {
                     this.vy = this.jumpPower;
                     playSound('jump');
+                    this.expression = 'effort';
+                    setTimeout(() => this.expression = 'normal', 300);
                 }
             }
-            // ---------------------------------------------------
 
             kick() {
                 if (!this.isKicking && this.kickAngle < 0.1) {
                     this.isKicking = true;
+                    this.expression = 'effort';
+                    setTimeout(() => this.expression = 'normal', 200);
                 }
             }
 
@@ -323,132 +827,397 @@
                 const distX = ball.x - this.x;
                 const distY = ball.y - this.y;
                 
-                // Takip et
-                if (Math.abs(distX) > 25) {
-                    if (distX > 0) this.vx = this.speed * 0.6;
-                    else this.vx = -this.speed * 0.6;
+                // Movement
+                const moveThreshold = 30;
+                const aiSpeed = this.speed * 0.7;
+                
+                if (Math.abs(distX) > moveThreshold) {
+                    this.vx += (distX > 0 ? 1 : -1) * 0.8;
+                    if (this.vx > aiSpeed) this.vx = aiSpeed;
+                    if (this.vx < -aiSpeed) this.vx = -aiSpeed;
                 }
 
-                // Zıpla
-                if (ball.y < this.y - 60 && Math.abs(distX) < 80 && this.grounded) {
-                    this.jump(); // Artık jump() fonksiyonunu kullanıyor
+                // Jump when ball is above
+                if (ball.y < this.y - 50 && Math.abs(distX) < 100 && this.grounded) {
+                    if (Math.random() < 0.03) this.jump();
                 }
 
-                // Şut Çek
-                let facingBall = (this.side === 1 && distX > 0) || (this.side === -1 && distX < 0);
-                if (facingBall && Math.abs(distX) < 70 && Math.abs(distY) < 60) {
-                    if (Math.random() < 0.05) this.kick();
+                // Kick when ball is close
+                const facingBall = (this.side === 1 && distX > 0) || (this.side === -1 && distX < 0);
+                if (facingBall && Math.abs(distX) < 80 && Math.abs(distY) < 70) {
+                    if (Math.random() < 0.04) this.kick();
                 }
             }
 
             draw() {
+                const s = window._playerScale || 1;
+                
                 CTX.save();
                 CTX.translate(this.x, this.y);
-                if (this.side === -1) CTX.scale(-1, 1);
-
-                // Vücut
-                CTX.fillStyle = this.color;
-                CTX.fillRect(-18, 10, 36, 45);
-
-                // Ayak (Şut)
-                CTX.save();
-                CTX.translate(10, 50);
-                CTX.rotate(-this.kickAngle);
+                CTX.scale(s, s);
                 
-                CTX.fillStyle = '#2c3e50';
+                // Flip based on side
+                const facing = this.vx > 0.3 ? 1 : (this.vx < -0.3 ? -1 : this.side);
+                if (facing === -1) CTX.scale(-1, 1);
+
+                // === SHADOW ===
+                CTX.fillStyle = 'rgba(0,0,0,0.2)';
                 CTX.beginPath();
-                CTX.ellipse(5, 5, 14, 7, 0, 0, Math.PI*2);
+                CTX.ellipse(0, this.bodyHeight / (2*s) + 25, 30, 8, 0, 0, Math.PI * 2);
                 CTX.fill();
-                CTX.fillStyle = '#fff';
-                CTX.fillRect(0, 10, 4, 4);
-                CTX.fillRect(10, 10, 4, 4);
+
+                // === LEGS ===
+                const legY = this.bodyHeight / (2*s);
+                
+                // Back leg
+                CTX.save();
+                CTX.translate(-8, legY);
+                CTX.rotate(Math.sin(this.kickLeg) * 0.3);
+                this.drawLeg(false);
                 CTX.restore();
 
-                // Arka Ayak
-                CTX.fillStyle = '#2c3e50';
+                // Front leg (kicking)
+                CTX.save();
+                CTX.translate(8, legY);
+                CTX.rotate(-this.kickAngle + Math.sin(this.kickLeg + Math.PI) * 0.3);
+                this.drawLeg(true);
+                CTX.restore();
+
+                // === BODY (Jersey) ===
+                const bw = 30; // base body width
+                const bh = 45; // base body height
+                CTX.fillStyle = this.teamColor;
                 CTX.beginPath();
-                CTX.ellipse(-12, 55, 12, 6, 0, 0, Math.PI*2);
+                CTX.roundRect(-bw / 2, -bh / 2 + 5, bw, bh - 10, 8);
+                CTX.fill();
+                
+                // Jersey stripes
+                CTX.fillStyle = 'rgba(255,255,255,0.3)';
+                CTX.fillRect(-bw / 2 + 5, -bh / 2 + 10, 4, bh - 20);
+                CTX.fillRect(bw / 2 - 9, -bh / 2 + 10, 4, bh - 20);
+
+                // === ARMS ===
+                CTX.fillStyle = this.skinColor;
+                // Left arm
+                CTX.save();
+                CTX.translate(-bw / 2 - 3, -10);
+                CTX.rotate(-0.3 + Math.sin(this.kickLeg) * 0.2);
+                CTX.fillRect(-5, 0, 10, 25);
+                CTX.beginPath();
+                CTX.arc(0, 28, 6, 0, Math.PI * 2);
+                CTX.fill();
+                CTX.restore();
+
+                // Right arm
+                CTX.save();
+                CTX.translate(bw / 2 + 3, -10);
+                CTX.rotate(0.3 + Math.sin(this.kickLeg + Math.PI) * 0.2);
+                CTX.fillRect(-5, 0, 10, 25);
+                CTX.beginPath();
+                CTX.arc(0, 28, 6, 0, Math.PI * 2);
+                CTX.fill();
+                CTX.restore();
+
+                // === HEAD (BIG!) ===
+                const hr = 40; // base head radius
+                const headY = -bh / 2 - hr + 15;
+                
+                // Head base
+                CTX.fillStyle = this.skinColor;
+                CTX.beginPath();
+                CTX.arc(0, headY, hr, 0, Math.PI * 2);
                 CTX.fill();
 
-                // Kafa
-                CTX.fillStyle = '#f1c27d';
+                // Ears
                 CTX.beginPath();
-                CTX.arc(0, -15, this.radius, 0, Math.PI * 2);
+                CTX.arc(-hr + 3, headY, 8, 0, Math.PI * 2);
+                CTX.arc(hr - 3, headY, 8, 0, Math.PI * 2);
                 CTX.fill();
 
-                // Göz
-                CTX.fillStyle = '#fff';
-                CTX.beginPath();
-                CTX.arc(14, -15, 11, 0, Math.PI * 2);
-                CTX.fill();
-                CTX.fillStyle = '#000';
-                CTX.beginPath();
-                CTX.arc(18, -15, 4, 0, Math.PI * 2);
-                CTX.fill();
+                // === HAIR ===
+                this.drawHair(headY, hr);
 
-                // Bandana
-                CTX.fillStyle = this.color;
-                CTX.beginPath();
-                CTX.arc(0, -20, this.radius + 1, Math.PI, Math.PI * 2);
-                CTX.fill();
+                // === FACE ===
+                this.drawFace(headY, hr);
 
                 CTX.restore();
+            }
+
+            drawLeg(isFront) {
+                // Shorts
+                CTX.fillStyle = this.teamColor;
+                CTX.fillRect(-8, 0, 16, 15);
+
+                // Leg
+                CTX.fillStyle = this.skinColor;
+                CTX.fillRect(-6, 15, 12, 20);
+
+                // Sock
+                CTX.fillStyle = '#fff';
+                CTX.fillRect(-6, 30, 12, 12);
+
+                // Boot
+                CTX.fillStyle = '#1a1a1a';
+                CTX.beginPath();
+                CTX.ellipse(isFront ? 4 : 0, 45, 12, 6, 0, 0, Math.PI * 2);
+                CTX.fill();
+                
+                // Boot studs
+                CTX.fillStyle = '#fff';
+                for (let i = 0; i < 3; i++) {
+                    CTX.fillRect(-4 + i * 5, 48, 2, 3);
+                }
+            }
+
+            drawHair(headY, hr) {
+                CTX.fillStyle = this.hairColor;
+                
+                switch (this.hairStyle) {
+                    case 'spiky':
+                        for (let i = -3; i <= 3; i++) {
+                            CTX.beginPath();
+                            CTX.moveTo(i * 8, headY - hr);
+                            CTX.lineTo(i * 8 - 5, headY - hr - 15 - Math.abs(i) * 2);
+                            CTX.lineTo(i * 8 + 5, headY - hr - 15 - Math.abs(i) * 2);
+                            CTX.fill();
+                        }
+                        break;
+                    case 'mohawk':
+                        CTX.beginPath();
+                        CTX.moveTo(0, headY - hr);
+                        CTX.lineTo(-8, headY - hr - 25);
+                        CTX.lineTo(8, headY - hr - 25);
+                        CTX.closePath();
+                        CTX.fill();
+                        break;
+                    case 'short':
+                        CTX.beginPath();
+                        CTX.arc(0, headY - 5, hr + 3, Math.PI, 0);
+                        CTX.fill();
+                        break;
+                    case 'bald':
+                        CTX.fillStyle = 'rgba(255,255,255,0.3)';
+                        CTX.beginPath();
+                        CTX.arc(-10, headY - 20, 12, 0, Math.PI * 2);
+                        CTX.fill();
+                        break;
+                }
+            }
+
+            drawFace(headY, hr) {
+                // Eyes
+                const eyeY = headY - 5;
+                const eyeSpacing = 15;
+                
+                // Eye whites
+                CTX.fillStyle = '#fff';
+                CTX.beginPath();
+                CTX.ellipse(-eyeSpacing, eyeY, 12, 14, 0, 0, Math.PI * 2);
+                CTX.ellipse(eyeSpacing, eyeY, 12, 14, 0, 0, Math.PI * 2);
+                CTX.fill();
+
+                // Pupils
+                if (!this.isBlinking) {
+                    CTX.fillStyle = '#2c3e50';
+                    const pupilOffset = this.side * 2;
+                    CTX.beginPath();
+                    CTX.arc(-eyeSpacing + pupilOffset, eyeY + 2, 6, 0, Math.PI * 2);
+                    CTX.arc(eyeSpacing + pupilOffset, eyeY + 2, 6, 0, Math.PI * 2);
+                    CTX.fill();
+
+                    // Eye shine
+                    CTX.fillStyle = '#fff';
+                    CTX.beginPath();
+                    CTX.arc(-eyeSpacing + pupilOffset - 2, eyeY, 2, 0, Math.PI * 2);
+                    CTX.arc(eyeSpacing + pupilOffset - 2, eyeY, 2, 0, Math.PI * 2);
+                    CTX.fill();
+                } else {
+                    CTX.strokeStyle = '#2c3e50';
+                    CTX.lineWidth = 3;
+                    CTX.beginPath();
+                    CTX.moveTo(-eyeSpacing - 8, eyeY);
+                    CTX.lineTo(-eyeSpacing + 8, eyeY);
+                    CTX.moveTo(eyeSpacing - 8, eyeY);
+                    CTX.lineTo(eyeSpacing + 8, eyeY);
+                    CTX.stroke();
+                }
+
+                // Eyebrows
+                CTX.strokeStyle = this.hairColor;
+                CTX.lineWidth = 4;
+                CTX.lineCap = 'round';
+                
+                const browY = eyeY - 18;
+                const browAngle = this.expression === 'effort' ? 0.3 : 0;
+                
+                CTX.beginPath();
+                CTX.moveTo(-eyeSpacing - 10, browY + browAngle * 5);
+                CTX.lineTo(-eyeSpacing + 10, browY - browAngle * 5);
+                CTX.stroke();
+                
+                CTX.beginPath();
+                CTX.moveTo(eyeSpacing - 10, browY - browAngle * 5);
+                CTX.lineTo(eyeSpacing + 10, browY + browAngle * 5);
+                CTX.stroke();
+
+                // Nose
+                CTX.fillStyle = this.skinColor;
+                CTX.beginPath();
+                CTX.moveTo(0, eyeY + 5);
+                CTX.lineTo(-6, eyeY + 18);
+                CTX.lineTo(6, eyeY + 18);
+                CTX.fill();
+                
+                CTX.strokeStyle = 'rgba(0,0,0,0.2)';
+                CTX.lineWidth = 2;
+                CTX.beginPath();
+                CTX.moveTo(-6, eyeY + 18);
+                CTX.lineTo(6, eyeY + 18);
+                CTX.stroke();
+
+                // Mouth
+                const mouthY = headY + 20;
+                CTX.fillStyle = '#c0392b';
+                
+                if (this.expression === 'happy') {
+                    CTX.beginPath();
+                    CTX.arc(0, mouthY - 5, 12, 0.1, Math.PI - 0.1);
+                    CTX.fill();
+                } else if (this.expression === 'effort') {
+                    CTX.strokeStyle = '#c0392b';
+                    CTX.lineWidth = 3;
+                    CTX.beginPath();
+                    CTX.moveTo(-10, mouthY);
+                    CTX.lineTo(10, mouthY);
+                    CTX.stroke();
+                } else {
+                    CTX.beginPath();
+                    CTX.arc(0, mouthY - 3, 8, 0.2, Math.PI - 0.2);
+                    CTX.fill();
+                }
             }
         }
 
+        // ===== BALL CLASS =====
         class Ball {
             constructor() {
-                this.r = 17;
+                this.r = Math.max(12, 20 * (window._playerScale || 1));
+                this.rotation = 0;
                 this.reset();
             }
+
             reset() {
                 this.x = CANVAS.width / 2;
-                this.y = 200;
-                this.vx = 0; this.vy = 5;
+                this.y = 150;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = 0;
                 this.rotation = 0;
             }
+
             update() {
                 this.vy += GRAVITY;
                 
-                const maxSpeed = 18;
-                if (this.vx > maxSpeed) this.vx = maxSpeed;
-                if (this.vx < -maxSpeed) this.vx = -maxSpeed;
-                if (this.vy > maxSpeed) this.vy = maxSpeed;
+                // Speed limits
+                const maxSpeed = 20;
+                this.vx = Math.max(-maxSpeed, Math.min(maxSpeed, this.vx));
+                this.vy = Math.max(-maxSpeed, Math.min(maxSpeed, this.vy));
 
                 this.x += this.vx;
                 this.y += this.vy;
-                this.rotation += this.vx * 0.1;
+                this.rotation += this.vx * 0.05;
 
+                // Ground bounce
                 if (this.y + this.r > GROUND_Y) {
                     this.y = GROUND_Y - this.r;
-                    this.vy *= -0.75;
+                    this.vy *= -0.7;
+                    this.vx *= 0.9;
+                    if (Math.abs(this.vy) > 2) {
+                        spawnParticles(this.x, GROUND_Y, '#8BC34A', 8, 3);
+                    }
                 }
+
+                // Ceiling
                 if (this.y - this.r < 0) {
-                    this.y = this.r; this.vy *= -0.6;
+                    this.y = this.r;
+                    this.vy *= -0.5;
                 }
-                if (this.x - this.r < 0) { this.x = this.r; this.vx *= -0.8; }
-                if (this.x + this.r > CANVAS.width) { this.x = CANVAS.width - this.r; this.vx *= -0.8; }
-                
-                this.vx *= 0.99;
+
+                // Walls
+                if (this.x - this.r < 0) {
+                    this.x = this.r;
+                    this.vx *= -0.8;
+                }
+                if (this.x + this.r > CANVAS.width) {
+                    this.x = CANVAS.width - this.r;
+                    this.vx *= -0.8;
+                }
+
+                // Air friction
+                this.vx *= 0.995;
             }
+
             draw() {
                 CTX.save();
                 CTX.translate(this.x, this.y);
                 CTX.rotate(this.rotation);
-                CTX.fillStyle = '#fff';
-                CTX.beginPath(); CTX.arc(0,0,this.r,0,Math.PI*2); CTX.fill();
-                CTX.strokeStyle = '#000'; CTX.lineWidth = 2; CTX.stroke();
-                CTX.fillStyle = '#000';
-                for(let i=0; i<5; i++) {
+
+                // Ball shadow
+                CTX.fillStyle = 'rgba(0,0,0,0.2)';
+                CTX.beginPath();
+                CTX.ellipse(3, this.r + (GROUND_Y - this.y - this.r) * 0.1, this.r * 0.8, 6, 0, 0, Math.PI * 2);
+                CTX.fill();
+
+                // Main ball
+                const gradient = CTX.createRadialGradient(-5, -5, 0, 0, 0, this.r);
+                gradient.addColorStop(0, '#ffffff');
+                gradient.addColorStop(1, '#e0e0e0');
+                
+                CTX.fillStyle = gradient;
+                CTX.beginPath();
+                CTX.arc(0, 0, this.r, 0, Math.PI * 2);
+                CTX.fill();
+
+                // Ball outline
+                CTX.strokeStyle = '#333';
+                CTX.lineWidth = 2;
+                CTX.stroke();
+
+                // Pentagon pattern (soccer ball)
+                CTX.fillStyle = '#1a1a1a';
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+                    const px = Math.cos(angle) * this.r * 0.5;
+                    const py = Math.sin(angle) * this.r * 0.5;
+                    
                     CTX.beginPath();
-                    CTX.arc(10*Math.cos(i*2*Math.PI/5), 10*Math.sin(i*2*Math.PI/5), 5, 0, Math.PI*2);
+                    CTX.moveTo(px, py);
+                    for (let j = 0; j < 5; j++) {
+                        const a = angle + (j * 2 * Math.PI / 5);
+                        CTX.lineTo(
+                            px + Math.cos(a) * 6,
+                            py + Math.sin(a) * 6
+                        );
+                    }
                     CTX.fill();
                 }
+
+                // Center pentagon
+                CTX.beginPath();
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+                    const px = Math.cos(angle) * 7;
+                    const py = Math.sin(angle) * 7;
+                    if (i === 0) CTX.moveTo(px, py);
+                    else CTX.lineTo(px, py);
+                }
+                CTX.closePath();
+                CTX.fill();
+
                 CTX.restore();
             }
         }
 
-        // --- GLOBAL DEĞİŞKENLER ---
+        // ===== GLOBAL VARIABLES =====
         let player1, player2, ball;
         let particles = [];
         let score1 = 0, score2 = 0;
@@ -456,236 +1225,770 @@
         let timerInterval;
         let screenShake = 0;
         let isGameRunning = false;
+        let isPaused = false;
         const keys = { a: false, d: false, w: false, space: false };
 
-        function init() {
-            CANVAS.width = window.innerWidth;
-            CANVAS.height = window.innerHeight;
-            GROUND_Y = CANVAS.height - GROUND_Y_OFFSET;
+        // ===== STADIUM / BACKGROUND =====
+        let clouds = [];
+        let grassBlades = [];
 
-            player1 = new Player(200, false, '#e74c3c', 1);
-            player2 = new Player(CANVAS.width - 200, true, '#3498db', -1);
-            ball = new Ball();
+        function initEnvironment() {
+            // Clouds
+            clouds = [];
+            for (let i = 0; i < 5; i++) {
+                clouds.push({
+                    x: Math.random() * CANVAS.width,
+                    y: 50 + Math.random() * 100,
+                    size: 30 + Math.random() * 50,
+                    speed: 0.2 + Math.random() * 0.3
+                });
+            }
 
-            if ('ontouchstart' in window) {
-                document.getElementById('mobile-controls').style.display = 'flex';
+            // Grass blades - mobilde daha az
+            grassBlades = [];
+            const bladeCount = isMobile ? 40 : 80;
+            for (let i = 0; i < bladeCount; i++) {
+                grassBlades.push({
+                    x: Math.random() * CANVAS.width,
+                    height: 5 + Math.random() * 15,
+                    sway: Math.random() * Math.PI * 2
+                });
+            }
+
+            // Arka plan cache'ini sıfırla
+            bgCache = null;
+            bgCacheKey = '';
+        }
+
+        // Arka plan cache sistemi
+        let bgCache = null;
+        let bgCacheKey = '';
+        let crowdData = [];
+
+        function buildCrowdData() {
+            crowdData = [];
+            const crowdColors = ['#e74c3c', '#3498db', '#f1c40f', '#9b59b6', '#1abc9c', '#fff'];
+            const cols = Math.ceil(CANVAS.width / 20);
+            const rows = isMobile ? 3 : 4;
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    crowdData.push({
+                        x: col * 20 + 10,
+                        y: row * 18,
+                        color: crowdColors[(col + row * 3) % crowdColors.length],
+                        phase: col * 0.7 + row * 1.3
+                    });
+                }
             }
         }
 
+        function buildBgCache() {
+            const key = CANVAS.width + 'x' + CANVAS.height + 'g' + GROUND_Y;
+            if (bgCacheKey === key && bgCache) return; // Zaten güncel
+
+            const offscreen = document.createElement('canvas');
+            offscreen.width = CANVAS.width;
+            offscreen.height = CANVAS.height;
+            const oc = offscreen.getContext('2d');
+
+            // Sky
+            const skyGradient = oc.createLinearGradient(0, 0, 0, GROUND_Y);
+            skyGradient.addColorStop(0, '#1a5276');
+            skyGradient.addColorStop(0.3, '#2980b9');
+            skyGradient.addColorStop(0.7, '#85c1e9');
+            skyGradient.addColorStop(1, '#aed6f1');
+            oc.fillStyle = skyGradient;
+            oc.fillRect(0, 0, CANVAS.width, GROUND_Y);
+
+            // Sun
+            const sunX = CANVAS.width - 100;
+            const sunY = 80;
+            const sunGradient = oc.createRadialGradient(sunX, sunY, 0, sunX, sunY, 60);
+            sunGradient.addColorStop(0, '#fff5cc');
+            sunGradient.addColorStop(0.3, '#f39c12');
+            sunGradient.addColorStop(1, 'rgba(243, 156, 18, 0)');
+            oc.fillStyle = sunGradient;
+            oc.beginPath();
+            oc.arc(sunX, sunY, 60, 0, Math.PI * 2);
+            oc.fill();
+
+            // Mountains
+            oc.fillStyle = '#1e3a5f';
+            oc.beginPath();
+            oc.moveTo(0, GROUND_Y);
+            for (let i = 0; i <= CANVAS.width; i += 80) {
+                oc.lineTo(i, GROUND_Y - 100 - Math.sin(i * 0.01) * 50);
+            }
+            oc.lineTo(CANVAS.width, GROUND_Y);
+            oc.fill();
+
+            // Stadium stands
+            oc.fillStyle = '#2c3e50';
+            oc.fillRect(0, GROUND_Y - 80, CANVAS.width, 80);
+
+            // Ground
+            const groundGradient = oc.createLinearGradient(0, GROUND_Y, 0, CANVAS.height);
+            groundGradient.addColorStop(0, '#2ecc71');
+            groundGradient.addColorStop(0.3, '#27ae60');
+            groundGradient.addColorStop(1, '#1e8449');
+            oc.fillStyle = groundGradient;
+            oc.fillRect(0, GROUND_Y, CANVAS.width, CANVAS.height - GROUND_Y);
+
+            // Grass center line
+            oc.strokeStyle = 'rgba(255,255,255,0.3)';
+            oc.lineWidth = 3;
+            oc.setLineDash([20, 30]);
+            oc.beginPath();
+            oc.moveTo(CANVAS.width / 2, GROUND_Y);
+            oc.lineTo(CANVAS.width / 2, CANVAS.height);
+            oc.stroke();
+            oc.setLineDash([]);
+
+            // Center circle
+            oc.strokeStyle = 'rgba(255,255,255,0.2)';
+            oc.lineWidth = 3;
+            oc.beginPath();
+            oc.arc(CANVAS.width / 2, GROUND_Y + 50, 60, 0, Math.PI * 2);
+            oc.stroke();
+
+            bgCache = offscreen;
+            bgCacheKey = key;
+            buildCrowdData();
+        }
+
+        let frameCount = 0;
+
+        function drawBackground() {
+            frameCount++;
+
+            // Cache geçersizse yeniden oluştur
+            const key = CANVAS.width + 'x' + CANVAS.height + 'g' + GROUND_Y;
+            if (!bgCache || bgCacheKey !== key) {
+                buildBgCache();
+            }
+
+            // Statik arka planı yapıştır (çok hızlı)
+            CTX.drawImage(bgCache, 0, 0);
+
+            // Bulutlar (hafif - sadece 5 tane)
+            CTX.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            clouds.forEach(cloud => {
+                cloud.x += cloud.speed;
+                if (cloud.x > CANVAS.width + 100) cloud.x = -100;
+                for (let i = 0; i < 3; i++) {
+                    CTX.beginPath();
+                    CTX.arc(cloud.x + i * cloud.size * 0.6, cloud.y, cloud.size * (0.6 + i * 0.2), 0, Math.PI * 2);
+                    CTX.fill();
+                }
+            });
+
+            // Kalabalık - sabit renkler, yavaş hareket, batch çizim
+            const slowTime = frameCount * 0.05;
+            for (let i = 0; i < crowdData.length; i++) {
+                const c = crowdData[i];
+                CTX.fillStyle = c.color;
+                CTX.fillRect(
+                    c.x + Math.sin(slowTime + c.phase) * 1.5 - 3,
+                    GROUND_Y - 70 + c.y + Math.sin(slowTime * 0.7 + c.phase) * 1.5 - 3,
+                    6, 6
+                );
+            }
+
+            // Çim yaprakları - her 3 frame'de bir güncelle
+            CTX.strokeStyle = '#1e8449';
+            CTX.lineWidth = 2;
+            CTX.beginPath();
+            for (let i = 0; i < grassBlades.length; i++) {
+                const blade = grassBlades[i];
+                if (frameCount % 3 === 0) blade.sway += 0.06;
+                const swayX = Math.sin(blade.sway) * 5;
+                CTX.moveTo(blade.x, GROUND_Y);
+                CTX.quadraticCurveTo(
+                    blade.x + swayX,
+                    GROUND_Y - blade.height / 2,
+                    blade.x + swayX * 1.6,
+                    GROUND_Y - blade.height
+                );
+            }
+            CTX.stroke();
+
+            // Kaleler
+            drawGoal(20, true);
+            drawGoal(CANVAS.width - 20, false);
+        }
+
+        function drawGoal(x, isLeft) {
+            const width = Math.min(70, CANVAS.width * 0.08);
+            const height = window._goalHeight || 160;
+            const topY = GROUND_Y - height;
+            const postWidth = Math.max(4, 8 * (window._playerScale || 1));
+
+            // Net background
+            CTX.fillStyle = 'rgba(255,255,255,0.1)';
+            if (isLeft) {
+                CTX.fillRect(x - width, topY, width, height);
+            } else {
+                CTX.fillRect(x, topY, width, height);
+            }
+
+            // Net lines
+            CTX.strokeStyle = 'rgba(255,255,255,0.4)';
+            CTX.lineWidth = 1;
+            const netStep = 15;
+            
+            for (let i = 0; i <= width; i += netStep) {
+                CTX.beginPath();
+                if (isLeft) {
+                    CTX.moveTo(x - i, topY);
+                    CTX.lineTo(x - i + (isLeft ? -10 : 10), GROUND_Y);
+                } else {
+                    CTX.moveTo(x + i, topY);
+                    CTX.lineTo(x + i + 10, GROUND_Y);
+                }
+                CTX.stroke();
+            }
+            
+            for (let j = 0; j <= height; j += netStep) {
+                CTX.beginPath();
+                if (isLeft) {
+                    CTX.moveTo(x, topY + j);
+                    CTX.lineTo(x - width, topY + j + netStep);
+                } else {
+                    CTX.moveTo(x, topY + j);
+                    CTX.lineTo(x + width, topY + j + netStep);
+                }
+                CTX.stroke();
+            }
+
+            // Goal posts (3D effect)
+            CTX.fillStyle = '#ecf0f1';
+            
+            // Top bar
+            CTX.fillRect(isLeft ? x - width / 2 : x, topY - postWidth, width / 2 + postWidth, postWidth);
+            CTX.fillStyle = '#bdc3c7';
+            CTX.fillRect(isLeft ? x - width / 2 : x, topY, width / 2 + postWidth, 3);
+
+            // Left post
+            CTX.fillStyle = '#ecf0f1';
+            CTX.fillRect(isLeft ? x - width / 2 : x, topY, postWidth, height);
+            CTX.fillStyle = '#bdc3c7';
+            CTX.fillRect(isLeft ? x - width / 2 + postWidth : x + postWidth, topY, 3, height);
+
+            // Right post  
+            CTX.fillStyle = '#ecf0f1';
+            CTX.fillRect(x - (isLeft ? 0 : postWidth), topY, postWidth, height);
+        }
+
+        // ===== COLLISIONS =====
         function checkCollisions() {
             [player1, player2].forEach(p => {
-                let dx = ball.x - p.x;
-                let dy = ball.y - (p.y - 15); 
-                let dist = Math.sqrt(dx*dx + dy*dy);
-                
-                let kickRangeX = 60;
-                let kickRangeY = 60;
-                let inKickRange = false;
+                // Head collision - ölçeklenmiş
+                const headRadius = 40 * (window._playerScale || 1);
+                const bodyH = 45 * (window._playerScale || 1);
+                const headY = p.y - bodyH / 2 - headRadius + 15 * (window._playerScale || 1);
+                const dx = ball.x - p.x;
+                const dy = ball.y - headY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
 
-                if (p.side === 1 && ball.x > p.x && ball.x < p.x + kickRangeX) inKickRange = true;
-                if (p.side === -1 && ball.x < p.x && ball.x > p.x - kickRangeX) inKickRange = true;
-                
-                if (Math.abs(ball.y - (p.y + 40)) < kickRangeY && inKickRange) {
-                    if (p.isKicking) {
-                        // SERT ŞUT
-                        let shootAngle = -Math.PI / 4;
-                        if (p.side === -1) shootAngle = -Math.PI * 0.75;
+                // Kick zone - ölçeklenmiş
+                const s = window._playerScale || 1;
+                const kickRangeX = 70 * s;
+                const kickRangeY = 50 * s;
+                const inKickRange = (p.side === 1 && ball.x > p.x && ball.x < p.x + kickRangeX) ||
+                                   (p.side === -1 && ball.x < p.x && ball.x > p.x - kickRangeX);
 
-                        let power = 22; 
-                        ball.vx = Math.cos(shootAngle) * power;
-                        ball.vy = Math.sin(shootAngle) * power;
-                        
-                        playSound('kick');
-                        spawnParticles(ball.x, ball.y, '#fff', 15);
-                        screenShake = 10;
-                        p.isKicking = false; 
-                        return; 
-                    }
+                const footY = p.y + (45 / 2 + 10) * s;
+                
+                if (inKickRange && Math.abs(ball.y - footY) < kickRangeY && p.isKicking) {
+                    // POWER KICK!
+                    let shootAngle = -Math.PI / 4;
+                    if (p.side === -1) shootAngle = -Math.PI * 0.75;
+
+                    const power = 24;
+                    ball.vx = Math.cos(shootAngle) * power;
+                    ball.vy = Math.sin(shootAngle) * power;
+
+                    playSound('kick');
+                    spawnParticles(ball.x, ball.y, '#fff', 18, 5);
+                    screenShake = 12;
+                    p.isKicking = false;
+                    p.expression = 'happy';
+                    setTimeout(() => p.expression = 'normal', 500);
+                    return;
                 }
 
-                if (dist < ball.r + p.radius) {
-                    let angle = Math.atan2(dy, dx);
-                    let force = 8; 
-                    
-                    ball.vx = Math.cos(angle) * force;
+                // Head/body collision
+                if (dist < ball.r + headRadius) {
+                    const angle = Math.atan2(dy, dx);
+                    const force = 10;
+
+                    ball.vx = Math.cos(angle) * force + p.vx * 0.5;
                     ball.vy = Math.sin(angle) * force;
-                    
-                    let overlap = (ball.r + p.radius) - dist;
+
+                    // Push ball out
+                    const overlap = (ball.r + headRadius) - dist;
                     ball.x += Math.cos(angle) * overlap;
                     ball.y += Math.sin(angle) * overlap;
-                    
+
                     playSound('bump');
+                    spawnParticles(ball.x, ball.y, '#f1c40f', 10, 3);
                 }
             });
         }
 
-        function spawnParticles(x, y, color, speed) {
-            for(let i=0; i<8; i++) particles.push(new Particle(x, y, color, speed));
+        function spawnParticles(x, y, color, speed, size = 4) {
+            for (let i = 0; i < 10; i++) {
+                particles.push(new Particle(x, y, color, speed, size));
+            }
         }
 
-        function drawGoal(ctx, x, isLeft) {
-            const width = 80;
-            const height = 180;
-            const topY = GROUND_Y - height;
-            
-            ctx.save();
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
-            ctx.lineWidth = 6;
-            ctx.lineCap = "round";
-
-            ctx.beginPath();
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-            ctx.lineWidth = 2;
-            let step = 15;
-            for(let i=0; i<=width; i+=step) {
-                let currentX = isLeft ? x - i : x + i;
-                ctx.moveTo(currentX, topY);
-                ctx.lineTo(isLeft ? x : x, GROUND_Y);
-            }
-            for(let j=0; j<=height; j+=step) {
-                ctx.moveTo(x, topY + j);
-                ctx.lineTo(isLeft ? x - width : x + width, topY + j + (step));
-            }
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.strokeStyle = "#fff";
-            ctx.lineWidth = 6;
-            
-            if (isLeft) {
-                ctx.moveTo(x, topY); ctx.lineTo(x - width/2, topY);
-                ctx.moveTo(x, topY); ctx.lineTo(x, GROUND_Y);
-            } else {
-                ctx.moveTo(x, topY); ctx.lineTo(x + width/2, topY);
-                ctx.moveTo(x, topY); ctx.lineTo(x, GROUND_Y);
-            }
-            ctx.stroke();
-            ctx.restore();
-        }
-
-        function drawBackground() {
-            CTX.fillStyle = '#27ae60';
-            CTX.fillRect(0, GROUND_Y, CANVAS.width, CANVAS.height - GROUND_Y);
-            CTX.fillStyle = '#2ecc71';
-            CTX.fillRect(0, GROUND_Y, CANVAS.width, 10);
-            drawGoal(CTX, 40, true);
-            drawGoal(CTX, CANVAS.width - 40, false);
-        }
+        let goalScored = false; // Gol kilidi - çift gol önler
 
         function checkGoal() {
-            if (ball.x < 30 && ball.y > GROUND_Y - 180) {
-                score2++; handleGoal();
-            } else if (ball.x > CANVAS.width - 30 && ball.y > GROUND_Y - 180) {
-                score1++; handleGoal();
+            if (goalScored) return; // Gol bekleme süresindeyse kontrol etme
+
+            const goalHeight = window._goalHeight || 160;
+            const goalTop = GROUND_Y - goalHeight;
+
+            // Left goal (AI scores)
+            if (ball.x < 20 && ball.y > goalTop && ball.y < GROUND_Y) {
+                score2++;
+                handleGoal('AI');
+            }
+            // Right goal (Player scores)
+            else if (ball.x > CANVAS.width - 20 && ball.y > goalTop && ball.y < GROUND_Y) {
+                score1++;
+                handleGoal('Player');
             }
         }
 
-        function handleGoal() {
-            screenShake = 25;
+        function handleGoal(scorer) {
+            goalScored = true; // Kilitle - tekrar gol olmasın
+            screenShake = 30;
             playSound('goal');
+            
+            // Topu hemen sahadan çıkar (kale içinde kalmasın)
+            ball.vx = 0;
+            ball.vy = 0;
+            ball.x = CANVAS.width / 2;
+            ball.y = -100; // Ekran dışına at geçici olarak
+            
+            // Show celebration
+            const goalEl = document.getElementById('goal-celebration');
+            goalEl.textContent = scorer === 'Player' ? 'GOOOL! ⚽' : 'GOL! 😢';
+            goalEl.style.display = 'block';
+            goalEl.style.animation = 'none';
+            goalEl.offsetHeight; // Reflow
+            goalEl.style.animation = 'goalAnim 1.5s ease-out forwards';
+            setTimeout(() => goalEl.style.display = 'none', 1500);
+
+            // Particles explosion - sınırlı sayıda
+            const px = CANVAS.width / 2;
+            const py = GROUND_Y - 100;
+            for (let i = 0; i < 15; i++) {
+                const colors = ['#f1c40f', '#e74c3c', '#3498db', '#2ecc71'];
+                particles.push(new Particle(
+                    px, py,
+                    colors[i % colors.length],
+                    15, 5
+                ));
+            }
+
+            // Update scoreboard
             updateScoreboard();
-            ball.reset();
-            ball.vy = 0; ball.vx = 0; ball.y = 200;
+            
+            // Reset ball ve kilidi aç
+            setTimeout(() => {
+                if (ball) {
+                    ball.reset();
+                }
+                // Oyuncuları başlangıç pozisyonuna getir
+                if (player1) {
+                    player1.x = CANVAS.width * 0.25;
+                    player1.vx = 0;
+                }
+                if (player2) {
+                    player2.x = CANVAS.width * 0.75;
+                    player2.vx = 0;
+                }
+                goalScored = false; // Kilidi aç
+            }, 1500);
         }
 
         function updateScoreboard() {
-            document.getElementById('p1-score').innerText = score1;
-            document.getElementById('p2-score').innerText = score2;
+            document.getElementById('p1-score').textContent = score1;
+            document.getElementById('p2-score').textContent = score2;
         }
 
-        function gameLoop() {
-            if (!isGameRunning) return;
+        // ===== INIT =====
+        function init() {
+            CANVAS.width = window.innerWidth;
+            CANVAS.height = window.innerHeight;
+            GROUND_Y = CANVAS.height - getGroundYOffset();
+
+            // Kale yüksekliğini ekrana göre ayarla
+            const availableHeight = GROUND_Y;
+            const goalHeightRatio = Math.min(160, availableHeight * 0.45);
+            window._goalHeight = goalHeightRatio;
+
+            // Player boyutlarını ekrana göre ölçekle
+            const scale = Math.min(1, CANVAS.height / 600, CANVAS.width / 800);
+            window._playerScale = Math.max(0.6, scale);
+
+            // Player 1 - Human
+            player1 = new Player(
+                CANVAS.width * 0.25,
+                false,
+                '#e74c3c', // Team color (red jersey)
+                '#f5cba7', // Skin
+                '#4a2c04', // Hair
+                'spiky',
+                1
+            );
+
+            // Player 2 - AI
+            player2 = new Player(
+                CANVAS.width * 0.75,
+                true,
+                '#3498db', // Team color (blue jersey)
+                '#d4a574', // Skin
+                '#1a1a1a', // Hair
+                'short',
+                -1
+            );
+
+            ball = new Ball();
+            
+            initEnvironment();
+        }
+
+        // ===== GAME LOOP =====
+        let animFrameId = null;
+        let lastFrameTime = 0;
+        const TARGET_FPS = 60;
+        const FRAME_DURATION = 1000 / TARGET_FPS;
+        
+        function gameLoop(timestamp) {
+            if (!isGameRunning || isPaused) {
+                animFrameId = null;
+                return;
+            }
+
+            animFrameId = requestAnimationFrame(gameLoop);
+
+            // Frame rate limitleme - mobilde aşırı frame önle
+            if (timestamp - lastFrameTime < FRAME_DURATION * 0.8) return;
+            lastFrameTime = timestamp;
 
             CTX.clearRect(0, 0, CANVAS.width, CANVAS.height);
 
-            if (screenShake > 0) {
+            // Screen shake
+            let shaking = screenShake > 0.5;
+            if (shaking) {
                 CTX.save();
-                CTX.translate((Math.random()-0.5)*screenShake, (Math.random()-0.5)*screenShake);
+                CTX.translate(
+                    (Math.random() - 0.5) * screenShake,
+                    (Math.random() - 0.5) * screenShake
+                );
                 screenShake *= 0.9;
-                if(screenShake<1) screenShake=0;
+                if (screenShake < 0.5) screenShake = 0;
             }
 
             drawBackground();
 
-            // KONTROLLER
+            // Controls - movement
             if (keys.a) player1.vx -= 1;
             if (keys.d) player1.vx += 1;
+            player1.vx = Math.max(-player1.speed, Math.min(player1.speed, player1.vx));
             
-            if (player1.vx > player1.speed) player1.vx = player1.speed;
-            if (player1.vx < -player1.speed) player1.vx = -player1.speed;
+            if (keys.w) {
+                player1.jump();
+            }
+            if (keys.space) {
+                player1.kick();
+                keys.space = false;
+            }
 
-            if (keys.w) player1.jump(); // ARTIK ÇALIŞACAK
-            if (keys.space) player1.kick();
-
+            // Update - gol beklemesinde topu güncelleme
             player1.update(ball);
             player2.update(ball);
-            ball.update();
-            checkCollisions();
-            checkGoal();
+            if (!goalScored) {
+                ball.update();
+                checkCollisions();
+                checkGoal();
+            }
 
+            // Draw
             player1.draw();
             player2.draw();
-            ball.draw();
+            if (!goalScored || ball.y > 0) {
+                ball.draw();
+            }
 
-            particles.forEach((p, i) => {
-                p.update(); p.draw();
-                if(p.life<=0) particles.splice(i,1);
-            });
+            // Particles - güvenli temizleme
+            let aliveCount = 0;
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].life <= 0) {
+                    particles.splice(i, 1);
+                } else {
+                    aliveCount++;
+                }
+            }
+            
+            // Particle sayısını sınırla
+            if (aliveCount > 60) {
+                particles.splice(0, aliveCount - 60);
+            }
 
-            if (screenShake > 0 || particles.length > 0) CTX.restore();
-
-            requestAnimationFrame(gameLoop);
+            if (shaking) CTX.restore();
         }
 
+        // ===== GAME CONTROL =====
         function startGame() {
+            initAudio();
             document.getElementById('intro-screen').style.display = 'none';
             document.getElementById('game-over-screen').style.display = 'none';
-            init();
-            score1 = 0; score2 = 0;
-            timeLeft = GAME_DURATION;
-            updateScoreboard();
-            isGameRunning = true;
-            gameLoop();
+            document.getElementById('pause-screen').style.display = 'none';
             
+            // Önceki animasyon frame'ini iptal et
+            if (animFrameId) {
+                cancelAnimationFrame(animFrameId);
+                animFrameId = null;
+            }
+            
+            init();
+            score1 = 0;
+            score2 = 0;
+            timeLeft = GAME_DURATION;
+            particles = [];
+            goalScored = false;
+            lastFrameTime = 0;
+            updateScoreboard();
+            document.getElementById('timer').textContent = timeLeft;
+            document.getElementById('timer').classList.remove('warning');
+            
+            // Input durumlarını sıfırla
+            keys.a = false;
+            keys.d = false;
+            keys.w = false;
+            keys.space = false;
+            
+            isGameRunning = true;
+            isPaused = false;
+            
+            playSound('whistle');
+            animFrameId = requestAnimationFrame(gameLoop);
+
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
+                if (isPaused) return;
                 timeLeft--;
-                document.getElementById('timer').innerText = timeLeft;
-                if (timeLeft <= 0) endGame();
+                document.getElementById('timer').textContent = timeLeft;
+                
+                if (timeLeft <= 10) {
+                    document.getElementById('timer').classList.add('warning');
+                }
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
             }, 1000);
         }
 
         function endGame() {
             isGameRunning = false;
             clearInterval(timerInterval);
-            document.getElementById('game-over-screen').style.display = 'flex';
-            let msg = score1 > score2 ? "KAZANDIN! 🏆" : (score2 > score1 ? "KAYBETTİN 🤖" : "BERABERE! 🤝");
-            document.getElementById('winner-text').innerText = msg;
+            if (animFrameId) {
+                cancelAnimationFrame(animFrameId);
+                animFrameId = null;
+            }
+            playSound('whistle');
+            
+            const gameOverScreen = document.getElementById('game-over-screen');
+            const resultIcon = document.getElementById('result-icon');
+            const winnerText = document.getElementById('winner-text');
+            
+            if (score1 > score2) {
+                resultIcon.textContent = '🏆';
+                winnerText.textContent = 'KAZANDIN!';
+                winnerText.style.color = '#f1c40f';
+            } else if (score2 > score1) {
+                resultIcon.textContent = '😢';
+                winnerText.textContent = 'KAYBETTİN';
+                winnerText.style.color = '#e74c3c';
+            } else {
+                resultIcon.textContent = '🤝';
+                winnerText.textContent = 'BERABERE!';
+                winnerText.style.color = '#3498db';
+            }
+            
+            document.getElementById('final-p1').textContent = score1;
+            document.getElementById('final-p2').textContent = score2;
+            
+            gameOverScreen.style.display = 'flex';
         }
 
-        function resetGame() { startGame(); }
+        function togglePause() {
+            if (!isGameRunning) return;
+            
+            isPaused = !isPaused;
+            document.getElementById('pause-screen').style.display = isPaused ? 'flex' : 'none';
+            
+            if (!isPaused) {
+                lastFrameTime = 0;
+                if (!animFrameId) {
+                    animFrameId = requestAnimationFrame(gameLoop);
+                }
+            }
+        }
 
+        // ===== EVENT LISTENERS =====
+        
+        // Keyboard
         window.addEventListener('keydown', e => {
-            if(e.key==='a'||e.key==='A'||e.key==='ArrowLeft') keys.a=true;
-            if(e.key==='d'||e.key==='D'||e.key==='ArrowRight') keys.d=true;
-            if(e.key==='w'||e.key==='W'||e.key==='ArrowUp') keys.w=true;
-            if(e.key===' ') keys.space=true;
-        });
-        window.addEventListener('keyup', e => {
-            if(e.key==='a'||e.key==='A'||e.key==='ArrowLeft') keys.a=false;
-            if(e.key==='d'||e.key==='D'||e.key==='ArrowRight') keys.d=false;
-            if(e.key==='w'||e.key==='W'||e.key==='ArrowUp') keys.w=false;
-            if(e.key===' ') keys.space=false;
+            if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') keys.a = true;
+            if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') keys.d = true;
+            if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') keys.w = true;
+            if (e.key === ' ') { e.preventDefault(); keys.space = true; }
+            if (e.key === 'Escape') togglePause();
         });
 
-        const touchMap = { 'btn-left':'a', 'btn-right':'d', 'btn-jump':'w', 'btn-shoot':'space' };
+        window.addEventListener('keyup', e => {
+            if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') keys.a = false;
+            if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') keys.d = false;
+            if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') keys.w = false;
+            if (e.key === ' ') keys.space = false;
+        });
+
+        // Mobile controls - multi-touch desteği ile
+        const touchMap = {
+            'btn-left': 'a',
+            'btn-right': 'd',
+            'btn-jump': 'w',
+            'btn-shoot': 'space'
+        };
+        
+        // Her butonun aktif touch id'sini takip et
+        const activeTouches = {};
+
         Object.keys(touchMap).forEach(id => {
             const btn = document.getElementById(id);
             const key = touchMap[id];
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key]=true; btn.style.transform='scale(0.9)'; });
-            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[key]=false; btn.style.transform='scale(1)'; });
+            
+            btn.addEventListener('touchstart', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Bu butona dokunan parmağın id'sini kaydet
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    activeTouches[e.changedTouches[i].identifier] = id;
+                }
+                keys[key] = true;
+                btn.classList.add('active');
+                vibrate(10);
+            }, { passive: false });
+            
+            btn.addEventListener('touchend', e => {
+                e.preventDefault();
+                e.stopPropagation();
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    delete activeTouches[e.changedTouches[i].identifier];
+                }
+                keys[key] = false;
+                btn.classList.remove('active');
+            }, { passive: false });
+            
+            btn.addEventListener('touchcancel', e => {
+                for (let i = 0; i < e.changedTouches.length; i++) {
+                    delete activeTouches[e.changedTouches[i].identifier];
+                }
+                keys[key] = false;
+                btn.classList.remove('active');
+            });
+            
+            // Parmak butondan kayarsa
+            btn.addEventListener('touchmove', e => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, { passive: false });
         });
 
+        // Buttons
+        document.getElementById('start-btn').addEventListener('click', startGame);
+        document.getElementById('start-btn').addEventListener('touchend', e => {
+            e.preventDefault();
+            startGame();
+        });
+
+        document.getElementById('restart-btn').addEventListener('click', startGame);
+        document.getElementById('restart-btn').addEventListener('touchend', e => {
+            e.preventDefault();
+            startGame();
+        });
+
+        document.getElementById('pause-btn').addEventListener('click', togglePause);
+        document.getElementById('pause-btn').addEventListener('touchend', e => {
+            e.preventDefault();
+            togglePause();
+        });
+
+        document.getElementById('resume-btn').addEventListener('click', togglePause);
+        document.getElementById('resume-btn').addEventListener('touchend', e => {
+            e.preventDefault();
+            togglePause();
+        });
+
+        document.getElementById('quit-btn').addEventListener('click', () => location.reload());
+        document.getElementById('quit-btn').addEventListener('touchend', e => {
+            e.preventDefault();
+            location.reload();
+        });
+
+        // Window resize
+        let resizeTimeout;
+        function handleResize() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                CANVAS.width = window.innerWidth;
+                CANVAS.height = window.innerHeight;
+                GROUND_Y = CANVAS.height - getGroundYOffset();
+                
+                // Kale ve oyuncu ölçeğini güncelle
+                const availableHeight = GROUND_Y;
+                window._goalHeight = Math.min(160, availableHeight * 0.45);
+                const scale = Math.min(1, CANVAS.height / 600, CANVAS.width / 800);
+                window._playerScale = Math.max(0.6, scale);
+                
+                // Oyuncular artık draw() içinde scale kullanıyor,
+                // headRadius/bodyWidth/bodyHeight güncellemeye gerek yok
+                
+                if (ball) {
+                    ball.r = Math.max(12, 20 * (window._playerScale || 1));
+                }
+                
+                initEnvironment();
+                setVH();
+                
+                // Eğer oyun durmuşsa sahneyi bir kez yeniden çiz
+                if (isGameRunning && isPaused) {
+                    CTX.clearRect(0, 0, CANVAS.width, CANVAS.height);
+                    drawBackground();
+                    if (player1) player1.draw();
+                    if (player2) player2.draw();
+                    if (ball) ball.draw();
+                }
+            }, 150);
+        }
+        
+        window.addEventListener('resize', handleResize);
+
+        window.addEventListener('orientationchange', () => {
+            setTimeout(handleResize, 300);
+            setTimeout(handleResize, 600);
+        });
+
+        // Initialize
         init();
     </script>
 </body>
