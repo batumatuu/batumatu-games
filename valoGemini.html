@@ -374,6 +374,119 @@
             z-index: 1;
         }
 
+        .minimap-teammate {
+            position: absolute;
+            width: clamp(4px, 0.9vw, 6px);
+            height: clamp(4px, 0.9vw, 6px);
+            background: #5eb5f0;
+            border-radius: 50%;
+            box-shadow: 0 0 4px rgba(94, 181, 240, 0.6);
+            z-index: 1;
+        }
+
+        /* Team Status */
+        #team-status {
+            position: absolute;
+            left: max(8px, env(safe-area-inset-left, 8px));
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(4px, 1vh, 8px);
+            pointer-events: none;
+            z-index: 12;
+        }
+
+        .team-member {
+            display: flex;
+            align-items: center;
+            gap: clamp(4px, 1vw, 8px);
+            background: rgba(0, 0, 0, 0.5);
+            padding: clamp(4px, 0.8vh, 8px) clamp(6px, 1.2vw, 12px);
+            border-left: 2px solid #5eb5f0;
+            transition: opacity 0.3s;
+        }
+
+        .team-member.dead {
+            opacity: 0.4;
+            border-left-color: #ff4655;
+        }
+
+        .tm-icon {
+            width: clamp(20px, 4vw, 32px);
+            height: clamp(20px, 4vw, 32px);
+            background: rgba(94, 181, 240, 0.3);
+            border: 1px solid #5eb5f0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(0.6rem, 1.5vw, 0.9rem);
+            font-weight: 900;
+            color: #5eb5f0;
+        }
+
+        .team-member.dead .tm-icon {
+            background: rgba(255, 70, 85, 0.3);
+            border-color: #ff4655;
+            color: #ff4655;
+        }
+
+        .tm-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .tm-name {
+            font-size: clamp(0.5rem, 1.2vw, 0.75rem);
+            color: #ece8e1;
+            font-weight: 600;
+        }
+
+        .tm-hp-bar {
+            width: clamp(40px, 8vw, 70px);
+            height: clamp(4px, 0.8vh, 6px);
+            background: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .tm-hp-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #53b991, #6fe8b2);
+            transition: width 0.3s;
+        }
+
+        .team-member.dead .tm-hp-fill {
+            width: 0% !important;
+            background: #ff4655;
+        }
+
+        /* Hide team status on very small screens */
+        @media (max-width: 480px) {
+            #team-status {
+                display: none;
+            }
+        }
+
+        @media (max-height: 500px) and (orientation: landscape) {
+            #team-status {
+                top: auto;
+                bottom: max(60px, env(safe-area-inset-bottom, 60px));
+                transform: none;
+                flex-direction: row;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            .team-member {
+                padding: 3px 6px;
+            }
+            .tm-info {
+                display: none;
+            }
+        }
+
         .minimap-building {
             position: absolute;
             background: rgba(255, 255, 255, 0.15);
@@ -912,8 +1025,9 @@
 
     <div id="loading-screen" class="overlay-screen">
         <div style="width:50px; height:50px; border:3px solid rgba(255,70,85,0.3); border-top-color:#ff4655; border-radius:50%; animation:spin 0.8s linear infinite; margin-bottom:20px;"></div>
-        <h1 style="color: #ece8e1; letter-spacing:4px;">LOADING</h1>
+        <h1 style="color: #ece8e1; letter-spacing:4px;">INITIALIZING</h1>
         <div id="loading-progress" style="color:#ff4655; font-size:clamp(0.8rem,2vw,1rem); letter-spacing:2px;">0%</div>
+        <p style="color:#555; font-size:0.7rem; margin-top:15px; letter-spacing:1px;">LOADING TACTICAL ASSETS...</p>
         <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
     </div>
 
@@ -970,6 +1084,38 @@
 
         <!-- Kill Feed (top right) -->
         <div id="kill-feed"></div>
+
+        <!-- Team Status (left side) -->
+        <div id="team-status">
+            <div class="team-member" id="tm-0">
+                <div class="tm-icon">P</div>
+                <div class="tm-info">
+                    <div class="tm-name">Phoenix</div>
+                    <div class="tm-hp-bar"><div class="tm-hp-fill"></div></div>
+                </div>
+            </div>
+            <div class="team-member" id="tm-1">
+                <div class="tm-icon">J</div>
+                <div class="tm-info">
+                    <div class="tm-name">Jett</div>
+                    <div class="tm-hp-bar"><div class="tm-hp-fill"></div></div>
+                </div>
+            </div>
+            <div class="team-member" id="tm-2">
+                <div class="tm-icon">S</div>
+                <div class="tm-info">
+                    <div class="tm-name">Sage</div>
+                    <div class="tm-hp-bar"><div class="tm-hp-fill"></div></div>
+                </div>
+            </div>
+            <div class="team-member" id="tm-3">
+                <div class="tm-icon">R</div>
+                <div class="tm-info">
+                    <div class="tm-name">Reyna</div>
+                    <div class="tm-hp-bar"><div class="tm-hp-fill"></div></div>
+                </div>
+            </div>
+        </div>
 
         <!-- Minimap (top left) -->
         <div id="minimap">
@@ -1047,7 +1193,6 @@
     <script type="module">
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
         // --- DEVICE DETECTION ---
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
@@ -1067,90 +1212,569 @@
             document.body.classList.add('mobile-visible');
         }
 
-        // --- ASSET LOADER ---
+        // --- ASSET LOADER (placeholder - using built-in models) ---
         class AssetLoader {
             constructor() {
-                this.loader = new GLTFLoader();
                 this.cache = new Map();
             }
             async load(url, onProgress) {
-                if (this.cache.has(url)) return this.cache.get(url).clone();
-                return new Promise((resolve) => {
-                    this.loader.load(url, (gltf) => {
-                        this.cache.set(url, gltf.scene);
-                        resolve(gltf.scene.clone());
-                    },
-                        (xhr) => { if (onProgress) onProgress(Math.floor(xhr.loaded / xhr.total * 100)); },
-                        (err) => { console.error("Load failed", err); resolve(null); });
-                });
+                // Return null - we use procedural models instead
+                if (onProgress) onProgress(100);
+                return null;
             }
         }
 
-        // --- AUDIO MANAGER ---
+        // --- AUDIO MANAGER (ENHANCED) ---
         class AudioManager {
             constructor() {
                 this.ctx = null;
                 this.enabled = false;
+                this.masterVolume = 0.7;
+                this.sfxVolume = 0.8;
             }
+
             _ensureCtx() {
                 if (!this.ctx) {
                     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    this.masterGain = this.ctx.createGain();
+                    this.masterGain.gain.value = this.masterVolume;
+                    this.masterGain.connect(this.ctx.destination);
+
+                    // Create compressor for better sound
+                    this.compressor = this.ctx.createDynamicsCompressor();
+                    this.compressor.threshold.value = -24;
+                    this.compressor.knee.value = 30;
+                    this.compressor.ratio.value = 12;
+                    this.compressor.attack.value = 0.003;
+                    this.compressor.release.value = 0.25;
+                    this.compressor.connect(this.masterGain);
                 }
             }
+
             unlock() {
                 this._ensureCtx();
                 this.ctx.resume();
                 this.enabled = true;
             }
+
+            _createNoise(duration) {
+                const bufferSize = this.ctx.sampleRate * duration;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                return noise;
+            }
+
+            _createFilter(type, freq, q = 1) {
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = type;
+                filter.frequency.value = freq;
+                filter.Q.value = q;
+                return filter;
+            }
+
             playShoot() {
                 if (!this.enabled) return;
                 this._ensureCtx();
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(350, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + 0.1);
+                const now = this.ctx.currentTime;
+
+                // Layer 1: Gunshot crack (high freq noise burst)
+                const crack = this._createNoise(0.08);
+                const crackFilter = this._createFilter('highpass', 2000, 1);
+                const crackGain = this.ctx.createGain();
+                crackGain.gain.setValueAtTime(0.4 * this.sfxVolume, now);
+                crackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                crack.connect(crackFilter);
+                crackFilter.connect(crackGain);
+                crackGain.connect(this.compressor);
+                crack.start(now);
+                crack.stop(now + 0.08);
+
+                // Layer 2: Low thump (body of the shot)
+                const thump = this.ctx.createOscillator();
+                thump.type = 'sine';
+                thump.frequency.setValueAtTime(150, now);
+                thump.frequency.exponentialRampToValueAtTime(50, now + 0.1);
+                const thumpGain = this.ctx.createGain();
+                thumpGain.gain.setValueAtTime(0.5 * this.sfxVolume, now);
+                thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                thump.connect(thumpGain);
+                thumpGain.connect(this.compressor);
+                thump.start(now);
+                thump.stop(now + 0.1);
+
+                // Layer 3: Mechanical click
+                const click = this.ctx.createOscillator();
+                click.type = 'square';
+                click.frequency.setValueAtTime(3000, now + 0.02);
+                click.frequency.exponentialRampToValueAtTime(1500, now + 0.04);
+                const clickGain = this.ctx.createGain();
+                clickGain.gain.setValueAtTime(0, now);
+                clickGain.gain.setValueAtTime(0.15 * this.sfxVolume, now + 0.02);
+                clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                click.connect(clickGain);
+                clickGain.connect(this.compressor);
+                click.start(now);
+                click.stop(now + 0.05);
+
+                // Layer 4: Tail/reverb simulation
+                const tail = this._createNoise(0.3);
+                const tailFilter = this._createFilter('lowpass', 800, 0.5);
+                const tailGain = this.ctx.createGain();
+                tailGain.gain.setValueAtTime(0.08 * this.sfxVolume, now + 0.05);
+                tailGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                tail.connect(tailFilter);
+                tailFilter.connect(tailGain);
+                tailGain.connect(this.compressor);
+                tail.start(now);
+                tail.stop(now + 0.3);
             }
+
             playReload() {
                 if (!this.enabled) return;
                 this._ensureCtx();
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
-                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + 0.4);
+                const now = this.ctx.currentTime;
+
+                // Magazine release click
+                const release = this.ctx.createOscillator();
+                release.type = 'square';
+                release.frequency.setValueAtTime(800, now);
+                release.frequency.setValueAtTime(400, now + 0.02);
+                const releaseGain = this.ctx.createGain();
+                releaseGain.gain.setValueAtTime(0.2 * this.sfxVolume, now);
+                releaseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                release.connect(releaseGain);
+                releaseGain.connect(this.compressor);
+                release.start(now);
+                release.stop(now + 0.05);
+
+                // Magazine out sound
+                const magOut = this._createNoise(0.15);
+                const magOutFilter = this._createFilter('bandpass', 600, 2);
+                const magOutGain = this.ctx.createGain();
+                magOutGain.gain.setValueAtTime(0.15 * this.sfxVolume, now + 0.1);
+                magOutGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                magOut.connect(magOutFilter);
+                magOutFilter.connect(magOutGain);
+                magOutGain.connect(this.compressor);
+                magOut.start(now + 0.1);
+                magOut.stop(now + 0.25);
+
+                // Magazine insert
+                const magIn = this._createNoise(0.1);
+                const magInFilter = this._createFilter('bandpass', 1200, 3);
+                const magInGain = this.ctx.createGain();
+                magInGain.gain.setValueAtTime(0.2 * this.sfxVolume, now + 0.5);
+                magInGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                magIn.connect(magInFilter);
+                magInFilter.connect(magInGain);
+                magInGain.connect(this.compressor);
+                magIn.start(now + 0.5);
+                magIn.stop(now + 0.6);
+
+                // Metal click (magazine lock)
+                const lock = this.ctx.createOscillator();
+                lock.type = 'square';
+                lock.frequency.setValueAtTime(2000, now + 0.55);
+                lock.frequency.exponentialRampToValueAtTime(500, now + 0.6);
+                const lockGain = this.ctx.createGain();
+                lockGain.gain.setValueAtTime(0.25 * this.sfxVolume, now + 0.55);
+                lockGain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+                lock.connect(lockGain);
+                lockGain.connect(this.compressor);
+                lock.start(now + 0.55);
+                lock.stop(now + 0.65);
+
+                // Bolt/chamber sound
+                const bolt = this._createNoise(0.12);
+                const boltFilter = this._createFilter('bandpass', 2500, 2);
+                const boltGain = this.ctx.createGain();
+                boltGain.gain.setValueAtTime(0.18 * this.sfxVolume, now + 0.85);
+                boltGain.gain.exponentialRampToValueAtTime(0.001, now + 0.97);
+                bolt.connect(boltFilter);
+                boltFilter.connect(boltGain);
+                boltGain.connect(this.compressor);
+                bolt.start(now + 0.85);
+                bolt.stop(now + 0.97);
+
+                // Final click
+                const finalClick = this.ctx.createOscillator();
+                finalClick.type = 'triangle';
+                finalClick.frequency.setValueAtTime(1500, now + 1.0);
+                finalClick.frequency.exponentialRampToValueAtTime(800, now + 1.03);
+                const finalGain = this.ctx.createGain();
+                finalGain.gain.setValueAtTime(0.15 * this.sfxVolume, now + 1.0);
+                finalGain.gain.exponentialRampToValueAtTime(0.001, now + 1.05);
+                finalClick.connect(finalGain);
+                finalGain.connect(this.compressor);
+                finalClick.start(now + 1.0);
+                finalClick.stop(now + 1.05);
             }
+
             playHit() {
                 if (!this.enabled) return;
                 this._ensureCtx();
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sine'; osc.frequency.setValueAtTime(900, this.ctx.currentTime);
-                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime + 0.05);
+                const now = this.ctx.currentTime;
+
+                // Satisfying hit marker sound
+                const hit1 = this.ctx.createOscillator();
+                hit1.type = 'sine';
+                hit1.frequency.setValueAtTime(1800, now);
+                hit1.frequency.setValueAtTime(2200, now + 0.02);
+                const hitGain1 = this.ctx.createGain();
+                hitGain1.gain.setValueAtTime(0.2 * this.sfxVolume, now);
+                hitGain1.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                hit1.connect(hitGain1);
+                hitGain1.connect(this.compressor);
+                hit1.start(now);
+                hit1.stop(now + 0.08);
+
+                // Second harmonic
+                const hit2 = this.ctx.createOscillator();
+                hit2.type = 'sine';
+                hit2.frequency.setValueAtTime(2800, now);
+                const hitGain2 = this.ctx.createGain();
+                hitGain2.gain.setValueAtTime(0.1 * this.sfxVolume, now);
+                hitGain2.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                hit2.connect(hitGain2);
+                hitGain2.connect(this.compressor);
+                hit2.start(now);
+                hit2.stop(now + 0.05);
+
+                // Impact thud
+                const thud = this._createNoise(0.04);
+                const thudFilter = this._createFilter('lowpass', 500);
+                const thudGain = this.ctx.createGain();
+                thudGain.gain.setValueAtTime(0.15 * this.sfxVolume, now);
+                thudGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                thud.connect(thudFilter);
+                thudFilter.connect(thudGain);
+                thudGain.connect(this.compressor);
+                thud.start(now);
+                thud.stop(now + 0.04);
             }
+
+            playHeadshot() {
+                if (!this.enabled) return;
+                this._ensureCtx();
+                const now = this.ctx.currentTime;
+
+                // Distinct headshot "dink" sound
+                const dink1 = this.ctx.createOscillator();
+                dink1.type = 'sine';
+                dink1.frequency.setValueAtTime(3200, now);
+                dink1.frequency.exponentialRampToValueAtTime(2800, now + 0.1);
+                const dinkGain1 = this.ctx.createGain();
+                dinkGain1.gain.setValueAtTime(0.3 * this.sfxVolume, now);
+                dinkGain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                dink1.connect(dinkGain1);
+                dinkGain1.connect(this.compressor);
+                dink1.start(now);
+                dink1.stop(now + 0.12);
+
+                // Metallic ring
+                const ring = this.ctx.createOscillator();
+                ring.type = 'sine';
+                ring.frequency.setValueAtTime(4000, now);
+                const ringGain = this.ctx.createGain();
+                ringGain.gain.setValueAtTime(0.15 * this.sfxVolume, now);
+                ringGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                ring.connect(ringGain);
+                ringGain.connect(this.compressor);
+                ring.start(now);
+                ring.stop(now + 0.2);
+            }
+
             playDamage() {
                 if (!this.enabled) return;
                 this._ensureCtx();
-                const noise = this.ctx.createBufferSource();
-                const buffer = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.1, this.ctx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-                noise.buffer = buffer;
-                const gain = this.ctx.createGain();
-                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
-                noise.connect(gain); gain.connect(this.ctx.destination);
-                noise.start();
+                const now = this.ctx.currentTime;
+
+                // Pain grunt simulation with noise
+                const grunt = this._createNoise(0.15);
+                const gruntFilter = this._createFilter('bandpass', 300, 2);
+                const gruntGain = this.ctx.createGain();
+                gruntGain.gain.setValueAtTime(0.3 * this.sfxVolume, now);
+                gruntGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+                grunt.connect(gruntFilter);
+                gruntFilter.connect(gruntGain);
+                gruntGain.connect(this.compressor);
+                grunt.start(now);
+                grunt.stop(now + 0.15);
+
+                // Impact thud
+                const impact = this._createNoise(0.08);
+                const impactFilter = this._createFilter('lowpass', 200);
+                const impactGain = this.ctx.createGain();
+                impactGain.gain.setValueAtTime(0.4 * this.sfxVolume, now);
+                impactGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                impact.connect(impactFilter);
+                impactFilter.connect(impactGain);
+                impactGain.connect(this.compressor);
+                impact.start(now);
+                impact.stop(now + 0.1);
+
+                // Heartbeat pulse
+                const heart = this.ctx.createOscillator();
+                heart.type = 'sine';
+                heart.frequency.setValueAtTime(60, now + 0.1);
+                const heartGain = this.ctx.createGain();
+                heartGain.gain.setValueAtTime(0.2 * this.sfxVolume, now + 0.1);
+                heartGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                heart.connect(heartGain);
+                heartGain.connect(this.compressor);
+                heart.start(now + 0.1);
+                heart.stop(now + 0.25);
+            }
+
+            playKill() {
+                if (!this.enabled) return;
+                this._ensureCtx();
+                const now = this.ctx.currentTime;
+
+                // Kill confirmed sound
+                const kill1 = this.ctx.createOscillator();
+                kill1.type = 'sine';
+                kill1.frequency.setValueAtTime(800, now);
+                kill1.frequency.setValueAtTime(1200, now + 0.05);
+                kill1.frequency.setValueAtTime(1000, now + 0.1);
+                const killGain1 = this.ctx.createGain();
+                killGain1.gain.setValueAtTime(0.2 * this.sfxVolume, now);
+                killGain1.gain.setValueAtTime(0.25 * this.sfxVolume, now + 0.05);
+                killGain1.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                kill1.connect(killGain1);
+                killGain1.connect(this.compressor);
+                kill1.start(now);
+                kill1.stop(now + 0.2);
+
+                // Body drop thud
+                const drop = this._createNoise(0.2);
+                const dropFilter = this._createFilter('lowpass', 150);
+                const dropGain = this.ctx.createGain();
+                dropGain.gain.setValueAtTime(0.25 * this.sfxVolume, now + 0.1);
+                dropGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                drop.connect(dropFilter);
+                dropFilter.connect(dropGain);
+                dropGain.connect(this.compressor);
+                drop.start(now + 0.1);
+                drop.stop(now + 0.3);
+            }
+
+            playFootstep() {
+                if (!this.enabled) return;
+                this._ensureCtx();
+                const now = this.ctx.currentTime;
+
+                const step = this._createNoise(0.08);
+                const stepFilter = this._createFilter('lowpass', 400 + Math.random() * 200);
+                const stepGain = this.ctx.createGain();
+                stepGain.gain.setValueAtTime(0.08 * this.sfxVolume, now);
+                stepGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                step.connect(stepFilter);
+                stepFilter.connect(stepGain);
+                stepGain.connect(this.compressor);
+                step.start(now);
+                step.stop(now + 0.08);
+            }
+
+            playTeammateVoice(type) {
+                if (!this.enabled) return;
+                this._ensureCtx();
+                const now = this.ctx.currentTime;
+
+                // Simulate radio voice
+                const voice = this._createNoise(0.3 + Math.random() * 0.2);
+                const voiceFilter = this._createFilter('bandpass', 1500, 3);
+                const voiceGain = this.ctx.createGain();
+
+                // Modulate for speech-like pattern
+                const lfo = this.ctx.createOscillator();
+                lfo.frequency.value = 8 + Math.random() * 4;
+                const lfoGain = this.ctx.createGain();
+                lfoGain.gain.value = 0.1;
+                lfo.connect(lfoGain);
+                lfoGain.connect(voiceGain.gain);
+
+                voiceGain.gain.setValueAtTime(0.12 * this.sfxVolume, now);
+                voiceGain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+                voice.connect(voiceFilter);
+                voiceFilter.connect(voiceGain);
+                voiceGain.connect(this.compressor);
+
+                lfo.start(now);
+                voice.start(now);
+                voice.stop(now + 0.4);
+                lfo.stop(now + 0.4);
+
+                // Radio click at start
+                const click = this.ctx.createOscillator();
+                click.type = 'square';
+                click.frequency.value = 2000;
+                const clickGain = this.ctx.createGain();
+                clickGain.gain.setValueAtTime(0.1 * this.sfxVolume, now);
+                clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
+                click.connect(clickGain);
+                clickGain.connect(this.compressor);
+                click.start(now);
+                click.stop(now + 0.02);
+            }
+
+            playEmptyGun() {
+                if (!this.enabled) return;
+                this._ensureCtx();
+                const now = this.ctx.currentTime;
+
+                const click = this.ctx.createOscillator();
+                click.type = 'square';
+                click.frequency.setValueAtTime(1500, now);
+                click.frequency.exponentialRampToValueAtTime(800, now + 0.03);
+                const clickGain = this.ctx.createGain();
+                clickGain.gain.setValueAtTime(0.2 * this.sfxVolume, now);
+                clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                click.connect(clickGain);
+                clickGain.connect(this.compressor);
+                click.start(now);
+                click.stop(now + 0.05);
+            }
+        }
+
+        // --- COLLISION MANAGER ---
+        class CollisionManager {
+            constructor(game) {
+                this.game = game;
+                this.colliders = [];
+                this.playerRadius = 0.5;
+                this.enemyRadius = 0.4;
+            }
+
+            addBoxCollider(x, z, width, depth, height = 10) {
+                this.colliders.push({
+                    type: 'box',
+                    minX: x - width / 2,
+                    maxX: x + width / 2,
+                    minZ: z - depth / 2,
+                    maxZ: z + depth / 2,
+                    height: height
+                });
+            }
+
+            addCircleCollider(x, z, radius) {
+                this.colliders.push({
+                    type: 'circle',
+                    x: x,
+                    z: z,
+                    radius: radius
+                });
+            }
+
+            checkPointCollision(x, z, radius = 0) {
+                for (const col of this.colliders) {
+                    if (col.type === 'box') {
+                        if (x + radius > col.minX && x - radius < col.maxX &&
+                            z + radius > col.minZ && z - radius < col.maxZ) {
+                            return col;
+                        }
+                    } else if (col.type === 'circle') {
+                        const dx = x - col.x;
+                        const dz = z - col.z;
+                        const dist = Math.sqrt(dx * dx + dz * dz);
+                        if (dist < col.radius + radius) {
+                            return col;
+                        }
+                    }
+                }
+                return null;
+            }
+
+            resolvePlayerCollision(position, velocity) {
+                const newX = position.x + velocity.x;
+                const newZ = position.z + velocity.z;
+
+                // Check X movement
+                let canMoveX = true;
+                let canMoveZ = true;
+
+                if (this.checkPointCollision(newX, position.z, this.playerRadius)) {
+                    canMoveX = false;
+                }
+
+                if (this.checkPointCollision(position.x, newZ, this.playerRadius)) {
+                    canMoveZ = false;
+                }
+
+                // Slide along walls
+                if (canMoveX) {
+                    position.x = newX;
+                }
+                if (canMoveZ) {
+                    position.z = newZ;
+                }
+
+                return { canMoveX, canMoveZ };
+            }
+
+            findPathAround(startX, startZ, targetX, targetZ, radius) {
+                const dx = targetX - startX;
+                const dz = targetZ - startZ;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+
+                if (dist < 0.1) return { x: 0, z: 0 };
+
+                const dirX = dx / dist;
+                const dirZ = dz / dist;
+
+                // Check if direct path is blocked
+                const steps = Math.ceil(dist / 0.5);
+                for (let i = 1; i <= Math.min(steps, 5); i++) {
+                    const checkX = startX + dirX * (i * 0.5);
+                    const checkZ = startZ + dirZ * (i * 0.5);
+                    if (this.checkPointCollision(checkX, checkZ, radius)) {
+                        // Path blocked, try to go around
+                        const perpX = -dirZ;
+                        const perpZ = dirX;
+
+                        // Try left
+                        const leftX = startX + perpX * 2;
+                        const leftZ = startZ + perpZ * 2;
+                        if (!this.checkPointCollision(leftX, leftZ, radius)) {
+                            return { x: perpX, z: perpZ };
+                        }
+
+                        // Try right
+                        const rightX = startX - perpX * 2;
+                        const rightZ = startZ - perpZ * 2;
+                        if (!this.checkPointCollision(rightX, rightZ, radius)) {
+                            return { x: -perpX, z: -perpZ };
+                        }
+
+                        // Stuck, don't move
+                        return { x: 0, z: 0 };
+                    }
+                }
+
+                return { x: dirX, z: dirZ };
+            }
+
+            isPositionValid(x, z, radius) {
+                return !this.checkPointCollision(x, z, radius);
+            }
+
+            findValidSpawnPosition(centerX, centerZ, range, radius) {
+                for (let attempts = 0; attempts < 30; attempts++) {
+                    const x = centerX + (Math.random() - 0.5) * range;
+                    const z = centerZ + (Math.random() - 0.5) * range;
+
+                    if (this.isPositionValid(x, z, radius)) {
+                        return { x, z };
+                    }
+                }
+                // Fallback - return center with offset
+                return { x: centerX + Math.random() * 5, z: centerZ + Math.random() * 5 };
             }
         }
 
@@ -1623,6 +2247,47 @@
                 this.scene.add(signAccent2);
             }
 
+            setupColliders(collisionManager) {
+                // Main back wall
+                collisionManager.addBoxCollider(0, -80, 100, 5);
+
+                // Side towers
+                collisionManager.addBoxCollider(-55, -75, 15, 15);
+                collisionManager.addBoxCollider(55, -75, 15, 15);
+
+                // Left buildings
+                collisionManager.addBoxCollider(-50, -40, 25, 20);
+                collisionManager.addBoxCollider(-30, -25, 10, 10);
+
+                // Right buildings
+                collisionManager.addBoxCollider(55, -45, 20, 25);
+                collisionManager.addBoxCollider(35, -20, 12, 8);
+
+                // Crates (simplified as groups)
+                collisionManager.addBoxCollider(-14.5, -14, 4, 4);
+                collisionManager.addBoxCollider(19, -17, 5, 5);
+                collisionManager.addBoxCollider(-8, -35, 2, 3);
+                collisionManager.addBoxCollider(10, -40, 2, 3);
+                collisionManager.addBoxCollider(-25, -55, 3, 3);
+                collisionManager.addBoxCollider(30, -50, 3, 3);
+
+                // Barriers
+                collisionManager.addBoxCollider(-12, -30, 4, 1);
+                collisionManager.addBoxCollider(12, -30, 4, 1);
+                collisionManager.addBoxCollider(-20, -50, 4, 1);
+                collisionManager.addBoxCollider(20, -50, 4, 1);
+
+                // Target stands
+                collisionManager.addBoxCollider(-20, -60, 1, 1);
+                collisionManager.addBoxCollider(0, -65, 1, 1);
+                collisionManager.addBoxCollider(20, -60, 1, 1);
+                collisionManager.addBoxCollider(-35, -55, 1, 1);
+                collisionManager.addBoxCollider(35, -55, 1, 1);
+
+                // Spawn platform edges (keep players on platform initially)
+                // Trees are not solid - players can walk through
+            }
+
             getBuildings() {
                 return this.buildings;
             }
@@ -1813,7 +2478,11 @@
             }
 
             fire() {
-                if (this.ammo <= 0 || this.isReloading || this.player.isDead) return;
+                if (this.isReloading || this.player.isDead) return;
+                if (this.ammo <= 0) {
+                    this.player.game.audio.playEmptyGun();
+                    return;
+                }
                 const now = performance.now() / 1000;
                 if (now - this.lastFireTime < this.fireRate) return;
                 this.ammo--; this.lastFireTime = now;
@@ -1846,6 +2515,475 @@
                 const swayY = this.player.mouseMoveY * 0.0008;
                 this.model.position.x += (0.4 + swayX - this.model.position.x) * 0.1;
                 this.model.position.y += (-0.4 + swayY - this.model.position.y) * 0.1;
+            }
+        }
+
+        // --- TEAMMATE AI ---
+        class Teammate extends THREE.Group {
+            constructor(game, index) {
+                super();
+                this.game = game;
+                this.index = index;
+                this.hp = 100;
+                this.maxHp = 100;
+                this.isTeammate = true;
+                this.isDead = false;
+
+                // Names and roles
+                this.names = ['Phoenix', 'Jett', 'Sage', 'Reyna', 'Omen'];
+                this.roles = ['Duelist', 'Duelist', 'Sentinel', 'Duelist', 'Controller'];
+                this.colors = [0xff6b35, 0x72e1d1, 0x5cdb95, 0xc45baa, 0x5c5470];
+
+                this.name = this.names[index % this.names.length];
+                this.role = this.roles[index % this.roles.length];
+                this.color = this.colors[index % this.colors.length];
+
+                // Behavior
+                this.state = 'follow'; // follow, combat, cover
+                this.targetEnemy = null;
+                this.lastShotTime = 0;
+                this.fireRate = 0.4;
+                this.accuracy = 0.6 + Math.random() * 0.3;
+                this.followDistance = 4 + index * 2;
+                this.followAngle = (index - 1.5) * 0.8;
+
+                // Animation state
+                this.animTime = Math.random() * Math.PI * 2;
+                this.walkCycle = 0;
+                this.isMoving = false;
+                this.bodyParts = {};
+
+                // Voice lines
+                this.lastVoiceTime = 0;
+                this.voiceInterval = 8 + Math.random() * 10;
+
+                this.createModel();
+                this.createNameTag();
+
+                // Shadow
+                const shadowGeo = new THREE.PlaneGeometry(1, 1);
+                const shadowMat = new THREE.MeshBasicMaterial({
+                    color: 0x000000,
+                    transparent: true,
+                    opacity: 0.25,
+                    depthWrite: false
+                });
+                this.shadow = new THREE.Mesh(shadowGeo, shadowMat);
+                this.shadow.rotation.x = -Math.PI / 2;
+                this.shadow.position.y = 0.02;
+                this.add(this.shadow);
+
+                game.scene.add(this);
+            }
+
+            createModel() {
+                const group = new THREE.Group();
+
+                const skinMat = new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 0.7 });
+                const bodyMat = new THREE.MeshStandardMaterial({ color: this.color, roughness: 0.6 });
+                const darkMat = new THREE.MeshStandardMaterial({ color: 0x1a1a2e, roughness: 0.8 });
+                const accentMat = new THREE.MeshStandardMaterial({ color: 0x5eb5f0, emissive: 0x5eb5f0, emissiveIntensity: 0.2 });
+                const eyeMat = new THREE.MeshStandardMaterial({ color: 0x5eb5f0, emissive: 0x5eb5f0, emissiveIntensity: 0.5 });
+
+                // Head
+                const headGroup = new THREE.Group();
+                headGroup.position.y = 1.65;
+
+                const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.45, 0.4), skinMat);
+                head.position.y = 0.2;
+
+                const helmet = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.28, 0.44), bodyMat);
+                helmet.position.y = 0.32;
+
+                const visor = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.1, 0.15), accentMat);
+                visor.position.set(0, 0.2, 0.14);
+
+                const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), eyeMat);
+                eyeL.position.set(-0.08, 0.2, 0.21);
+                const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), eyeMat);
+                eyeR.position.set(0.08, 0.2, 0.21);
+
+                headGroup.add(head, helmet, visor, eyeL, eyeR);
+                this.bodyParts.head = headGroup;
+
+                // Torso
+                const torsoGroup = new THREE.Group();
+                torsoGroup.position.y = 1.1;
+
+                const torso = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.5, 0.32), bodyMat);
+                torso.position.y = 0.15;
+
+                const vest = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 0.05), darkMat);
+                vest.position.set(0, 0.15, 0.17);
+
+                const badge = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.02), accentMat);
+                badge.position.set(-0.15, 0.25, 0.18);
+
+                torsoGroup.add(torso, vest, badge);
+                this.bodyParts.torso = torsoGroup;
+
+                // Arms
+                const armLeftGroup = new THREE.Group();
+                armLeftGroup.position.set(-0.38, 1.3, 0);
+
+                const armL1 = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.32, 0.16), bodyMat);
+                armL1.position.y = -0.12;
+                const armL2 = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.3, 0.14), skinMat);
+                armL2.position.set(0, -0.42, 0.02);
+                const handL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), skinMat);
+                handL.position.set(0, -0.6, 0.05);
+
+                armLeftGroup.add(armL1, armL2, handL);
+                this.bodyParts.armLeft = armLeftGroup;
+
+                const armRightGroup = new THREE.Group();
+                armRightGroup.position.set(0.38, 1.3, 0);
+
+                const armR1 = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.32, 0.16), bodyMat);
+                armR1.position.y = -0.12;
+                const armR2 = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.3, 0.14), skinMat);
+                armR2.position.set(0, -0.42, 0.02);
+                const handR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), skinMat);
+                handR.position.set(0, -0.6, 0.05);
+
+                // Gun in hand
+                const gun = new THREE.Group();
+                const gunBody = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.08, 0.35), darkMat);
+                const gunBarrel = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.2, 6), darkMat);
+                gunBarrel.rotation.x = Math.PI / 2;
+                gunBarrel.position.z = -0.25;
+                gun.add(gunBody, gunBarrel);
+                gun.position.set(0, -0.6, 0.2);
+                gun.rotation.x = -0.3;
+
+                armRightGroup.add(armR1, armR2, handR, gun);
+                this.bodyParts.armRight = armRightGroup;
+                this.bodyParts.gun = gun;
+
+                // Legs
+                const legLeftGroup = new THREE.Group();
+                legLeftGroup.position.set(-0.14, 0.72, 0);
+
+                const legL1 = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.38, 0.18), darkMat);
+                legL1.position.y = -0.16;
+                const legL2 = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.38, 0.16), darkMat);
+                legL2.position.y = -0.52;
+                const bootL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.26), bodyMat);
+                bootL.position.set(0, -0.68, 0.03);
+
+                legLeftGroup.add(legL1, legL2, bootL);
+                this.bodyParts.legLeft = legLeftGroup;
+
+                const legRightGroup = new THREE.Group();
+                legRightGroup.position.set(0.14, 0.72, 0);
+
+                const legR1 = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.38, 0.18), darkMat);
+                legR1.position.y = -0.16;
+                const legR2 = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.38, 0.16), darkMat);
+                legR2.position.y = -0.52;
+                const bootR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.26), bodyMat);
+                bootR.position.set(0, -0.68, 0.03);
+
+                legRightGroup.add(legR1, legR2, bootR);
+                this.bodyParts.legRight = legRightGroup;
+
+                group.add(headGroup, torsoGroup, armLeftGroup, armRightGroup, legLeftGroup, legRightGroup);
+                group.traverse(child => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+
+                this.add(group);
+            }
+
+            createNameTag() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 64;
+                const ctx = canvas.getContext('2d');
+
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(0, 0, 256, 64);
+
+                ctx.fillStyle = '#5eb5f0';
+                ctx.fillRect(0, 58, 256, 6);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 28px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.name, 128, 38);
+
+                const texture = new THREE.CanvasTexture(canvas);
+                const spriteMat = new THREE.SpriteMaterial({ map: texture, transparent: true });
+                this.nameTag = new THREE.Sprite(spriteMat);
+                this.nameTag.scale.set(1.5, 0.4, 1);
+                this.nameTag.position.y = 2.4;
+                this.add(this.nameTag);
+            }
+
+            animateIdle(dt) {
+                this.animTime += dt * 2;
+                const bob = Math.sin(this.animTime) * 0.015;
+                const breath = Math.sin(this.animTime * 0.7) * 0.008;
+
+                if (this.bodyParts.head) {
+                    this.bodyParts.head.position.y = 1.65 + bob;
+                }
+                if (this.bodyParts.torso) {
+                    this.bodyParts.torso.scale.x = 1 + breath;
+                }
+                if (this.bodyParts.armRight) {
+                    this.bodyParts.armRight.rotation.x = -0.3 + Math.sin(this.animTime * 0.5) * 0.03;
+                }
+            }
+
+            animateWalk(dt) {
+                this.walkCycle += dt * 9;
+                const legSwing = Math.sin(this.walkCycle) * 0.5;
+                const armSwing = Math.sin(this.walkCycle) * 0.3;
+                const bodyBob = Math.abs(Math.sin(this.walkCycle)) * 0.06;
+
+                if (this.bodyParts.legLeft) this.bodyParts.legLeft.rotation.x = legSwing;
+                if (this.bodyParts.legRight) this.bodyParts.legRight.rotation.x = -legSwing;
+                if (this.bodyParts.armLeft) this.bodyParts.armLeft.rotation.x = -armSwing;
+                if (this.bodyParts.armRight) this.bodyParts.armRight.rotation.x = armSwing * 0.5 - 0.3;
+                if (this.bodyParts.torso) this.bodyParts.torso.position.y = 1.1 + bodyBob;
+                if (this.bodyParts.head) this.bodyParts.head.position.y = 1.65 + bodyBob;
+            }
+
+            animateShooting() {
+                if (this.bodyParts.armRight) {
+                    this.bodyParts.armRight.rotation.x = -0.5;
+                    if (this.bodyParts.gun) {
+                        this.bodyParts.gun.position.z = 0.25;
+                        setTimeout(() => {
+                            if (this.bodyParts.gun) this.bodyParts.gun.position.z = 0.2;
+                        }, 50);
+                    }
+                }
+            }
+
+            checkLineOfSight(targetPos) {
+                const start = this.position.clone();
+                start.y += 1.5;
+                const end = targetPos.clone();
+                end.y = 1;
+
+                const dir = new THREE.Vector3().subVectors(end, start);
+                const dist = dir.length();
+                dir.normalize();
+
+                const steps = Math.ceil(dist / 1);
+                for (let i = 1; i < steps; i++) {
+                    const checkX = start.x + dir.x * i;
+                    const checkZ = start.z + dir.z * i;
+                    if (this.game.collision.checkPointCollision(checkX, checkZ, 0.3)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            shoot(enemy) {
+                const now = performance.now() / 1000;
+                if (now - this.lastShotTime < this.fireRate) return;
+                this.lastShotTime = now;
+
+                this.animateShooting();
+
+                // Check accuracy
+                if (Math.random() < this.accuracy) {
+                    const damage = 20 + Math.floor(Math.random() * 15);
+                    enemy.takeDamage(damage, true); // true = from teammate
+
+                    // Muzzle flash
+                    this.createMuzzleFlash();
+                }
+
+                // Shoot sound (quieter than player)
+                this.game.audio.playShoot();
+            }
+
+            createMuzzleFlash() {
+                const flash = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.08, 4, 4),
+                    new THREE.MeshBasicMaterial({ color: 0xffaa00 })
+                );
+                if (this.bodyParts.gun) {
+                    flash.position.copy(this.bodyParts.gun.position);
+                    flash.position.z -= 0.25;
+                    this.bodyParts.armRight.add(flash);
+                    setTimeout(() => {
+                        this.bodyParts.armRight.remove(flash);
+                        flash.geometry.dispose();
+                        flash.material.dispose();
+                    }, 50);
+                }
+            }
+
+            findNearestEnemy() {
+                let nearest = null;
+                let minDist = Infinity;
+
+                for (const enemy of this.game.enemies) {
+                    const dist = this.position.distanceTo(enemy.position);
+                    if (dist < 30 && dist < minDist) {
+                        minDist = dist;
+                        nearest = enemy;
+                    }
+                }
+
+                return nearest;
+            }
+
+            update(dt) {
+                if (this.isDead || this.game.player.isDead) return;
+
+                const playerPos = this.game.player.camera.position;
+                const distToPlayer = this.position.distanceTo(playerPos);
+
+                // Find enemy
+                this.targetEnemy = this.findNearestEnemy();
+
+                // Decide state
+                if (this.targetEnemy && this.position.distanceTo(this.targetEnemy.position) < 25) {
+                    this.state = 'combat';
+                } else if (distToPlayer > this.followDistance + 3) {
+                    this.state = 'follow';
+                } else {
+                    this.state = 'idle';
+                }
+
+                // Keep on ground
+                this.position.y = 0;
+
+                if (this.state === 'follow') {
+                    // Calculate follow position (behind and to the side of player)
+                    const playerDir = new THREE.Vector3();
+                    this.game.camera.getWorldDirection(playerDir);
+                    playerDir.y = 0;
+                    playerDir.normalize();
+
+                    const perpendicular = new THREE.Vector3(-playerDir.z, 0, playerDir.x);
+
+                    const targetX = playerPos.x - playerDir.x * this.followDistance + perpendicular.x * this.followAngle * 3;
+                    const targetZ = playerPos.z - playerDir.z * this.followDistance + perpendicular.z * this.followAngle * 3;
+
+                    const path = this.game.collision.findPathAround(
+                        this.position.x, this.position.z,
+                        targetX, targetZ,
+                        0.4
+                    );
+
+                    if (Math.abs(path.x) > 0.01 || Math.abs(path.z) > 0.01) {
+                        this.position.x += path.x * 5 * dt;
+                        this.position.z += path.z * 5 * dt;
+                        this.lookAt(this.position.x + path.x, 0, this.position.z + path.z);
+                        this.isMoving = true;
+                        this.animateWalk(dt);
+                    } else {
+                        this.isMoving = false;
+                        this.animateIdle(dt);
+                    }
+                } else if (this.state === 'combat') {
+                    // Look at enemy
+                    this.lookAt(this.targetEnemy.position.x, 0, this.targetEnemy.position.z);
+
+                    const distToEnemy = this.position.distanceTo(this.targetEnemy.position);
+
+                    // Move to good range
+                    if (distToEnemy > 15) {
+                        const dir = new THREE.Vector3().subVectors(this.targetEnemy.position, this.position).normalize();
+                        const path = this.game.collision.findPathAround(
+                            this.position.x, this.position.z,
+                            this.targetEnemy.position.x, this.targetEnemy.position.z,
+                            0.4
+                        );
+                        this.position.x += path.x * 4 * dt;
+                        this.position.z += path.z * 4 * dt;
+                        this.isMoving = true;
+                        this.animateWalk(dt);
+                    } else if (distToEnemy < 8) {
+                        // Too close, back up
+                        const dir = new THREE.Vector3().subVectors(this.position, this.targetEnemy.position).normalize();
+                        this.position.x += dir.x * 3 * dt;
+                        this.position.z += dir.z * 3 * dt;
+                        this.isMoving = true;
+                        this.animateWalk(dt);
+                    } else {
+                        this.isMoving = false;
+                        this.animateIdle(dt);
+                    }
+
+                    // Shoot at enemy (only if line of sight)
+                    if (distToEnemy < 25) {
+                        const hasLOS = this.checkLineOfSight(this.targetEnemy.position);
+                        if (hasLOS) {
+                            this.shoot(this.targetEnemy);
+                        }
+                    }
+                } else {
+                    // Idle - look around
+                    this.lookAt(playerPos.x, 0, playerPos.z);
+                    this.isMoving = false;
+                    this.animateIdle(dt);
+                }
+
+                // Random voice lines
+                const now = performance.now() / 1000;
+                if (now - this.lastVoiceTime > this.voiceInterval) {
+                    if (Math.random() < 0.3) {
+                        this.game.audio.playTeammateVoice();
+                    }
+                    this.lastVoiceTime = now;
+                    this.voiceInterval = 8 + Math.random() * 10;
+                }
+
+                // Update nameTag to face camera
+                if (this.nameTag) {
+                    this.nameTag.lookAt(this.game.camera.position);
+                }
+            }
+
+            takeDamage(amount) {
+                this.hp -= amount;
+
+                // Flash effect
+                this.traverse(child => {
+                    if (child.isMesh && child.material && child.material.color) {
+                        const origColor = child.material._origColor || child.material.color.getHex();
+                        child.material._origColor = origColor;
+                        child.material.color.setHex(0xff6666);
+                        setTimeout(() => {
+                            if (child.material) child.material.color.setHex(origColor);
+                        }, 100);
+                    }
+                });
+
+                if (this.hp <= 0) {
+                    this.isDead = true;
+                    this.visible = false;
+                    this.game.audio.playKill();
+
+                    // Show down message
+                    this.game.showTeammateDown(this.name);
+
+                    // Respawn after delay
+                    setTimeout(() => {
+                        this.hp = this.maxHp;
+                        this.isDead = false;
+                        this.visible = true;
+                        const spawn = this.game.collision.findValidSpawnPosition(
+                            this.game.player.camera.position.x,
+                            this.game.player.camera.position.z,
+                            10, 0.4
+                        );
+                        this.position.set(spawn.x, 0, spawn.z);
+                        this.game.audio.playTeammateVoice();
+                    }, 5000);
+                }
             }
         }
 
@@ -2121,7 +3259,7 @@
                 }
             }
 
-            takeDamage(amount) {
+            takeDamage(amount, fromTeammate = false) {
                 this.hp -= amount;
 
                 // Flash red and stagger
@@ -2145,9 +3283,36 @@
                 if (this.hp <= 0) {
                     this.game.scene.remove(this);
                     this.game.enemies = this.game.enemies.filter(e => e !== this);
-                    this.game.createDeathEffect(this.position);
+                    this.game.createDeathEffect(this.position, !fromTeammate);
                     this.game.spawnEnemy();
+
+                    // Play kill sound
+                    if (!fromTeammate) {
+                        this.game.audio.playKill();
+                    }
                 }
+            }
+
+            checkLineOfSight(targetPos) {
+                const start = this.position.clone();
+                start.y += 1; // Eye level
+                const end = targetPos.clone();
+                end.y = 1.7; // Target eye level
+
+                const dir = new THREE.Vector3().subVectors(end, start);
+                const dist = dir.length();
+                dir.normalize();
+
+                // Check collision along the line
+                const steps = Math.ceil(dist / 1);
+                for (let i = 1; i < steps; i++) {
+                    const checkX = start.x + dir.x * i;
+                    const checkZ = start.z + dir.z * i;
+                    if (this.game.collision.checkPointCollision(checkX, checkZ, 0.3)) {
+                        return false; // Blocked
+                    }
+                }
+                return true; // Clear line of sight
             }
 
             update(dt) {
@@ -2162,12 +3327,54 @@
                 // Keep on ground
                 this.position.y = 0;
 
-                if (dist < this.aggroRange) {
-                    this.lookAt(playerPos.x, this.position.y, playerPos.z);
+                // Find closest target (player or teammate) with line of sight
+                let target = playerPos;
+                let targetDist = dist;
+                let isPlayerTarget = true;
+                let hasLineOfSight = this.checkLineOfSight(playerPos);
 
-                    if (dist > this.attackRange) {
-                        const dir = new THREE.Vector3().subVectors(playerPos, this.position).normalize();
-                        this.position.addScaledVector(dir, this.moveSpeed * dt);
+                // Check if any teammate is closer and visible
+                for (const tm of this.game.teammates) {
+                    if (tm.isDead) continue;
+                    const tmDist = this.position.distanceTo(tm.position);
+                    if (tmDist < targetDist && tmDist < this.aggroRange) {
+                        if (this.checkLineOfSight(tm.position)) {
+                            target = tm.position;
+                            targetDist = tmDist;
+                            isPlayerTarget = false;
+                            this.targetTeammate = tm;
+                            hasLineOfSight = true;
+                        }
+                    }
+                }
+
+                // If no line of sight to current target, try to find path anyway but don't attack
+                if (!hasLineOfSight && targetDist < this.aggroRange) {
+                    // Still move towards target but can't attack yet
+                }
+
+                if (targetDist < this.aggroRange) {
+                    this.lookAt(target.x, this.position.y, target.z);
+
+                    if (targetDist > this.attackRange) {
+                        // Use pathfinding around obstacles
+                        const path = this.game.collision.findPathAround(
+                            this.position.x, this.position.z,
+                            target.x, target.z,
+                            this.game.collision.enemyRadius
+                        );
+
+                        if (Math.abs(path.x) > 0.01 || Math.abs(path.z) > 0.01) {
+                            const newX = this.position.x + path.x * this.moveSpeed * dt;
+                            const newZ = this.position.z + path.z * this.moveSpeed * dt;
+
+                            // Check collision before moving
+                            if (this.game.collision.isPositionValid(newX, newZ, this.game.collision.enemyRadius)) {
+                                this.position.x = newX;
+                                this.position.z = newZ;
+                            }
+                        }
+
                         this.isMoving = true;
                         this.animateWalk(dt);
                     } else {
@@ -2177,7 +3384,11 @@
                         const now = performance.now() / 1000;
                         if (now - this.lastAttackTime > this.attackInterval) {
                             this.animateAttack();
-                            this.game.player.takeDamage(15);
+                            if (isPlayerTarget) {
+                                this.game.player.takeDamage(15);
+                            } else if (this.targetTeammate) {
+                                this.targetTeammate.takeDamage(20);
+                            }
                             this.lastAttackTime = now;
                         }
                     }
@@ -2419,6 +3630,8 @@
                 if (!this.isActive) return;
 
                 const input = this.game.input;
+                const prevX = this.camera.position.x;
+                const prevZ = this.camera.position.z;
 
                 if (this.isMobile) {
                     // Mobile: joystick movement
@@ -2454,7 +3667,16 @@
                         moveDir.normalize();
 
                         const speed = 12 * dt;
-                        this.camera.position.addScaledVector(moveDir, speed);
+                        const newX = this.camera.position.x + moveDir.x * speed;
+                        const newZ = this.camera.position.z + moveDir.z * speed;
+
+                        // Check collision
+                        if (this.game.collision.isPositionValid(newX, this.camera.position.z, this.game.collision.playerRadius)) {
+                            this.camera.position.x = newX;
+                        }
+                        if (this.game.collision.isPositionValid(this.camera.position.x, newZ, this.game.collision.playerRadius)) {
+                            this.camera.position.z = newZ;
+                        }
                     }
                 } else {
                     // Desktop: keyboard + pointer lock
@@ -2464,15 +3686,45 @@
                     if (input.isPressed('KeyW') || input.isPressed('KeyS')) this.velocity.z -= this.direction.z * 55 * dt;
                     if (input.isPressed('KeyA') || input.isPressed('KeyD')) this.velocity.x -= this.direction.x * 55 * dt;
                     this.velocity.multiplyScalar(Math.max(0, 1 - 12 * dt));
-                    this.controls.moveRight(-this.velocity.x * dt);
-                    this.controls.moveForward(-this.velocity.z * dt);
+
+                    // Store position before movement
+                    const testX = this.camera.position.x - this.velocity.x * dt;
+                    const testZ = this.camera.position.z - this.velocity.z * dt;
+
+                    // Check X movement
+                    if (this.game.collision.isPositionValid(testX, this.camera.position.z, this.game.collision.playerRadius)) {
+                        this.controls.moveRight(-this.velocity.x * dt);
+                    } else {
+                        this.velocity.x = 0;
+                    }
+
+                    // Check Z movement
+                    if (this.game.collision.isPositionValid(this.camera.position.x, testZ, this.game.collision.playerRadius)) {
+                        this.controls.moveForward(-this.velocity.z * dt);
+                    } else {
+                        this.velocity.z = 0;
+                    }
 
                     if (input.keys['MouseDown']) this.weapon.fire();
                     if (input.isPressed('KeyR')) this.weapon.reload();
                 }
 
+                // Footstep sounds
+                const moved = Math.abs(this.camera.position.x - prevX) + Math.abs(this.camera.position.z - prevZ);
+                if (moved > 0.01) {
+                    this.footstepTimer = (this.footstepTimer || 0) + dt;
+                    if (this.footstepTimer > 0.35) {
+                        this.game.audio.playFootstep();
+                        this.footstepTimer = 0;
+                    }
+                }
+
                 // Keep camera at walking height (eye level)
                 this.camera.position.y = 1.7;
+
+                // World bounds
+                this.camera.position.x = Math.max(-95, Math.min(95, this.camera.position.x));
+                this.camera.position.z = Math.max(-90, Math.min(50, this.camera.position.z));
 
                 this.weapon.update(dt);
                 this.mouseMoveX *= 0.8;
@@ -2516,10 +3768,13 @@
                 this.input = { keys: {}, isPressed(c) { return !!this.keys[c]; } };
                 this.audio = new AudioManager();
                 this.ui = new UIManager();
+                this.collision = new CollisionManager(this);
                 this.world = new World(this);
+                this.world.setupColliders(this.collision);
                 this.player = new Player(this);
                 this.mobileControls = new MobileControls(this);
                 this.enemies = [];
+                this.teammates = [];
                 this.recepModel = null;
 
                 // Desktop keyboard input
@@ -2543,12 +3798,7 @@
 
                 // Respawn button
                 document.getElementById('respawn-btn').addEventListener('click', () => {
-                    this.player.hp = 100;
-                    this.player.isDead = false;
-                    this.camera.position.set(0, 1.7, 5);
-                    this.ui.updateHP(100);
-                    this.ui.hideDeathScreen();
-                    this.player.activate();
+                    this.respawnAll();
                 });
 
                 // Mobile: also handle touch on start/respawn
@@ -2562,12 +3812,7 @@
 
                     document.getElementById('respawn-btn').addEventListener('touchend', (e) => {
                         e.preventDefault();
-                        this.player.hp = 100;
-                        this.player.isDead = false;
-                        this.camera.position.set(0, 1.7, 5);
-                        this.ui.updateHP(100);
-                        this.ui.hideDeathScreen();
-                        this.player.activate();
+                        this.respawnAll();
                     }, { passive: false });
                 }
 
@@ -2587,32 +3832,46 @@
                 const prog = document.getElementById('loading-progress');
                 const title = document.querySelector('#loading-screen h1');
 
-                try {
-                    this.recepModel = await this.loader.load('./models/recep/source/recepivedik.glb', (p) => {
-                        prog.innerText = p + '%';
-                    });
+                // Simulate loading progress for better UX
+                let fakeProgress = 0;
+                const progressInterval = setInterval(() => {
+                    fakeProgress += Math.random() * 15;
+                    if (fakeProgress > 90) fakeProgress = 90;
+                    prog.innerText = Math.floor(fakeProgress) + '%';
+                }, 100);
 
-                    if (!this.recepModel) {
-                        throw new Error("Model file not found or load failed.");
-                    }
-                } catch (e) {
-                    console.error("Recep Model Error:", e);
-                    prog.innerText = "Error: Model could not be loaded. Check console.";
-                    title.style.color = "yellow";
-                }
+                // Skip external model loading - use built-in detailed models
+                this.recepModel = null;
+
+                // Complete loading
+                clearInterval(progressInterval);
+                prog.innerText = '100%';
+
+                // Small delay for smooth transition
+                await new Promise(resolve => setTimeout(resolve, 500));
 
                 document.getElementById('loading-screen').style.display = 'none';
                 document.getElementById('start-overlay').style.display = 'flex';
 
                 const enemyCount = isMobile ? 8 : 15;
                 for (let i = 0; i < enemyCount; i++) this.spawnEnemy();
+
+                // Spawn teammates
+                const teammateCount = isMobile ? 2 : 4;
+                for (let i = 0; i < teammateCount; i++) {
+                    const tm = new Teammate(this, i);
+                    const spawn = this.collision.findValidSpawnPosition(3, 5, 8, 0.4);
+                    tm.position.set(spawn.x, 0, spawn.z);
+                    this.teammates.push(tm);
+                }
+
                 this.clock = new THREE.Clock();
                 this.killCount = 0;
 
                 // Round timer (cosmetic)
                 this.roundTime = 100;
                 setInterval(() => {
-                    if (this.roundTime > 0) this.roundTime--;
+                    if (this.roundTime > 0 && !this.player.isDead) this.roundTime--;
                     const mins = Math.floor(this.roundTime / 60);
                     const secs = this.roundTime % 60;
                     const timerEl = document.getElementById('round-timer');
@@ -2623,9 +3882,8 @@
             }
 
             spawnEnemy() {
-                const x = (Math.random() - 0.5) * 100;
-                const z = -30 - Math.random() * 50;
-                const pos = new THREE.Vector3(x, 0, z);
+                const spawn = this.collision.findValidSpawnPosition(0, -50, 80, 0.5);
+                const pos = new THREE.Vector3(spawn.x, 0, spawn.z);
                 this.enemies.push(new Enemy(pos, this, this.recepModel));
             }
 
@@ -2636,70 +3894,198 @@
                 setTimeout(() => { this.scene.remove(s); s.geometry.dispose(); s.material.dispose(); }, 150);
             }
 
-            createDeathEffect(pos) {
-                // Particle burst on enemy death
-                const particleCount = isMobile ? 8 : 15;
+            createDeathEffect(pos, isPlayerKill = true) {
+                // Enhanced particle burst on enemy death
+                const particleCount = isMobile ? 10 : 20;
+
                 for (let i = 0; i < particleCount; i++) {
-                    const color = Math.random() > 0.5 ? 0xff4655 : 0xffffff;
-                    const size = 0.05 + Math.random() * 0.1;
-                    const p = new THREE.Mesh(
-                        new THREE.BoxGeometry(size, size, size),
-                        new THREE.MeshBasicMaterial({ color })
-                    );
+                    const isRed = Math.random() > 0.4;
+                    const color = isRed ? 0xff4655 : 0xffffff;
+                    const size = 0.04 + Math.random() * 0.12;
+
+                    const geo = Math.random() > 0.5
+                        ? new THREE.BoxGeometry(size, size, size)
+                        : new THREE.TetrahedronGeometry(size);
+
+                    const mat = new THREE.MeshBasicMaterial({
+                        color,
+                        transparent: true,
+                        opacity: 1
+                    });
+
+                    const p = new THREE.Mesh(geo, mat);
                     p.position.copy(pos);
-                    p.position.y += 1 + Math.random();
+                    p.position.y += 0.8 + Math.random() * 0.5;
+
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 3 + Math.random() * 5;
                     const vel = new THREE.Vector3(
-                        (Math.random() - 0.5) * 8,
-                        Math.random() * 6 + 2,
-                        (Math.random() - 0.5) * 8
+                        Math.cos(angle) * speed,
+                        Math.random() * 8 + 3,
+                        Math.sin(angle) * speed
                     );
+
                     this.scene.add(p);
+
                     const startTime = performance.now();
+                    const gravity = 18;
+                    const rotSpeed = (Math.random() - 0.5) * 10;
+
                     const animateParticle = () => {
                         const elapsed = (performance.now() - startTime) / 1000;
-                        if (elapsed > 1.2) {
+                        if (elapsed > 1.5) {
                             this.scene.remove(p);
                             p.geometry.dispose();
                             p.material.dispose();
                             return;
                         }
-                        vel.y -= 15 * 0.016;
-                        p.position.addScaledVector(vel, 0.016);
-                        p.rotation.x += 5 * 0.016;
-                        p.rotation.z += 3 * 0.016;
-                        p.material.opacity = 1 - elapsed / 1.2;
-                        p.material.transparent = true;
+
+                        const dt = 0.016;
+                        vel.y -= gravity * dt;
+                        p.position.addScaledVector(vel, dt);
+
+                        // Bounce off ground
+                        if (p.position.y < 0.05) {
+                            p.position.y = 0.05;
+                            vel.y = -vel.y * 0.3;
+                            vel.x *= 0.8;
+                            vel.z *= 0.8;
+                        }
+
+                        p.rotation.x += rotSpeed * dt;
+                        p.rotation.z += rotSpeed * 0.7 * dt;
+
+                        // Fade out
+                        p.material.opacity = Math.max(0, 1 - elapsed / 1.2);
+                        p.scale.setScalar(1 - elapsed * 0.3);
+
                         requestAnimationFrame(animateParticle);
                     };
                     animateParticle();
                 }
 
+                // Blood splat on ground
+                const splat = new THREE.Mesh(
+                    new THREE.CircleGeometry(0.5 + Math.random() * 0.5, 8),
+                    new THREE.MeshBasicMaterial({
+                        color: 0x8b0000,
+                        transparent: true,
+                        opacity: 0.6,
+                        depthWrite: false
+                    })
+                );
+                splat.rotation.x = -Math.PI / 2;
+                splat.position.set(pos.x, 0.02, pos.z);
+                this.scene.add(splat);
+
+                // Fade out splat
+                const splatStart = performance.now();
+                const fadeSplat = () => {
+                    const elapsed = (performance.now() - splatStart) / 1000;
+                    if (elapsed > 5) {
+                        this.scene.remove(splat);
+                        splat.geometry.dispose();
+                        splat.material.dispose();
+                        return;
+                    }
+                    if (elapsed > 3) {
+                        splat.material.opacity = 0.6 * (1 - (elapsed - 3) / 2);
+                    }
+                    requestAnimationFrame(fadeSplat);
+                };
+                fadeSplat();
+
                 // Add kill feed entry
-                this.addKillFeed();
+                if (isPlayerKill) {
+                    this.addKillFeed('You', true);
+                }
 
-                // Update score
-                this.killCount = (this.killCount || 0) + 1;
-                const attackScore = document.querySelector('.score-attack');
-                if (attackScore) attackScore.textContent = this.killCount;
+                // Update score only for player kills
+                if (isPlayerKill) {
+                    this.killCount = (this.killCount || 0) + 1;
+                    const attackScore = document.querySelector('.score-attack');
+                    if (attackScore) attackScore.textContent = this.killCount;
 
-                // Update stats display
-                const killsEl = document.getElementById('stat-kills');
-                if (killsEl) killsEl.textContent = this.killCount;
+                    // Update stats display
+                    const killsEl = document.getElementById('stat-kills');
+                    if (killsEl) killsEl.textContent = this.killCount;
+                }
             }
 
-            addKillFeed() {
+            addKillFeed(killerName = 'You', isPlayerKill = true) {
                 const feed = document.getElementById('kill-feed');
                 if (!feed) return;
                 const entry = document.createElement('div');
                 entry.className = 'kill-entry';
-                const names = ['Phoenix', 'Jett', 'Sage', 'Reyna', 'Omen', 'Sova', 'Viper', 'Cypher'];
-                const victimName = names[Math.floor(Math.random() * names.length)];
-                entry.innerHTML = `<span style="color:#5eb5f0">You</span> <span style="color:#ff4655; margin:0 6px;">▸</span> <span style="color:#ff4655">${victimName}</span>`;
+                const enemyNames = ['Enemy', 'Bot', 'Target', 'Hostile', 'Combatant'];
+                const victimName = enemyNames[Math.floor(Math.random() * enemyNames.length)];
+                
+                const killerColor = isPlayerKill ? '#5eb5f0' : '#5eb5f0';
+                const weaponIcon = '◆';
+                
+                entry.innerHTML = `<span style="color:${killerColor}">${killerName}</span> <span style="color:#fff; margin:0 6px;">${weaponIcon}</span> <span style="color:#ff4655">${victimName}</span>`;
                 feed.appendChild(entry);
+                
                 // Remove after animation
                 setTimeout(() => { if (entry.parentNode) entry.parentNode.removeChild(entry); }, 3200);
                 // Limit feed entries
                 while (feed.children.length > 5) feed.removeChild(feed.firstChild);
+            }
+
+            respawnAll() {
+                // Respawn player
+                this.player.hp = 100;
+                this.player.isDead = false;
+                this.camera.position.set(0, 1.7, 5);
+                this.ui.updateHP(100);
+                this.ui.hideDeathScreen();
+                this.player.activate();
+
+                // Respawn all teammates
+                this.teammates.forEach((tm, index) => {
+                    tm.hp = tm.maxHp;
+                    tm.isDead = false;
+                    tm.visible = true;
+                    const spawn = this.collision.findValidSpawnPosition(3, 5, 8, 0.4);
+                    tm.position.set(spawn.x, 0, spawn.z);
+                });
+
+                // Reset score
+                this.killCount = 0;
+                const attackScore = document.querySelector('.score-attack');
+                if (attackScore) attackScore.textContent = '0';
+
+                // Reset round timer
+                this.roundTime = 100;
+            }
+
+            showTeammateDown(name) {
+                const feed = document.getElementById('kill-feed');
+                if (!feed) return;
+                const entry = document.createElement('div');
+                entry.className = 'kill-entry';
+                entry.style.borderRightColor = '#5eb5f0';
+                entry.innerHTML = `<span style="color:#ff4655">Enemy</span> <span style="color:#fff; margin:0 6px;">◆</span> <span style="color:#5eb5f0">${name}</span>`;
+                feed.appendChild(entry);
+                setTimeout(() => { if (entry.parentNode) entry.parentNode.removeChild(entry); }, 3200);
+                while (feed.children.length > 5) feed.removeChild(feed.firstChild);
+            }
+
+            updateTeamUI() {
+                this.teammates.forEach((tm, index) => {
+                    const el = document.getElementById(`tm-${index}`);
+                    if (!el) return;
+
+                    if (tm.isDead) {
+                        el.classList.add('dead');
+                    } else {
+                        el.classList.remove('dead');
+                        const hpFill = el.querySelector('.tm-hp-fill');
+                        if (hpFill) {
+                            hpFill.style.width = (tm.hp / tm.maxHp * 100) + '%';
+                        }
+                    }
+                });
             }
 
             animate() {
@@ -2709,6 +4095,7 @@
                 this.player.update(dt);
                 this.mobileControls.update(dt);
                 this.enemies.forEach(e => e.update(dt));
+                this.teammates.forEach(tm => tm.update(dt));
 
                 // Update FPS counter
                 this.frameCount = (this.frameCount || 0) + 1;
@@ -2728,6 +4115,9 @@
                 // Update minimap
                 this.updateMinimap();
 
+                // Update team UI
+                this.updateTeamUI();
+
                 this.renderer.render(this.scene, this.camera);
             }
 
@@ -2744,15 +4134,17 @@
                     playerDot.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
                 }
 
-                // Remove old enemy dots
-                const oldDots = minimapContent.querySelectorAll('.minimap-enemy');
-                oldDots.forEach(d => d.remove());
+                // Remove old dots
+                const oldEnemyDots = minimapContent.querySelectorAll('.minimap-enemy');
+                oldEnemyDots.forEach(d => d.remove());
+                const oldTeamDots = minimapContent.querySelectorAll('.minimap-teammate');
+                oldTeamDots.forEach(d => d.remove());
 
-                // Add enemy dots
-                const mapScale = 0.8; // pixels per world unit
+                const mapScale = 0.8;
                 const mapSize = minimapContent.offsetWidth;
                 const playerPos = this.camera.position;
 
+                // Add enemy dots
                 this.enemies.forEach(enemy => {
                     const dx = enemy.position.x - playerPos.x;
                     const dz = enemy.position.z - playerPos.z;
@@ -2761,6 +4153,28 @@
                     if (dist < 50) {
                         const dot = document.createElement('div');
                         dot.className = 'minimap-enemy';
+
+                        const mapX = (mapSize / 2) + (dx * mapScale);
+                        const mapY = (mapSize / 2) + (dz * mapScale);
+
+                        if (mapX > 0 && mapX < mapSize && mapY > 0 && mapY < mapSize) {
+                            dot.style.left = mapX + 'px';
+                            dot.style.top = mapY + 'px';
+                            minimapContent.appendChild(dot);
+                        }
+                    }
+                });
+
+                // Add teammate dots
+                this.teammates.forEach(tm => {
+                    if (tm.isDead) return;
+                    const dx = tm.position.x - playerPos.x;
+                    const dz = tm.position.z - playerPos.z;
+                    const dist = Math.sqrt(dx * dx + dz * dz);
+
+                    if (dist < 60) {
+                        const dot = document.createElement('div');
+                        dot.className = 'minimap-teammate';
 
                         const mapX = (mapSize / 2) + (dx * mapScale);
                         const mapY = (mapSize / 2) + (dz * mapScale);
