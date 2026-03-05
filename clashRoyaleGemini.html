@@ -375,16 +375,110 @@
             pointer-events: none;
             z-index: 1000;
             opacity: 0;
-            transition: opacity 0.15s;
+            transition: opacity 0.1s;
+            transform: translate(-50%, -50%);
         }
 
         #ghost-card.visible {
-            opacity: 0.8;
+            opacity: 0.9;
         }
 
-        #ghost-card .card {
-            transform: scale(0.9);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        #ghost-card.dragging {
+            opacity: 1;
+        }
+
+        .ghost-card-inner {
+            width: clamp(60px, 14vw, 80px);
+            height: clamp(80px, 20vw, 110px);
+            background: rgba(241, 196, 15, 0.3);
+            border: 3px solid var(--primary-gold);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 40px rgba(241, 196, 15, 0.5), 0 0 20px rgba(241, 196, 15, 0.3);
+            animation: ghostPulse 0.5s ease-in-out infinite;
+        }
+
+        .ghost-card-inner .card-icon {
+            font-size: clamp(28px, 7vw, 40px);
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+
+        .ghost-card-inner .card-name {
+            font-size: clamp(10px, 2.5vw, 14px);
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            margin-top: 5px;
+        }
+
+        @keyframes ghostPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 10px 40px rgba(241, 196, 15, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 15px 50px rgba(241, 196, 15, 0.7); }
+        }
+
+        /* Card being dragged */
+        .card.dragging {
+            opacity: 0.4;
+            transform: scale(0.95);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Valid drop zone highlight */
+        #bg.drop-valid {
+            cursor: crosshair;
+        }
+
+        /* Range indicator for deployment */
+        #range-indicator {
+            position: fixed;
+            pointer-events: none;
+            z-index: 998;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        #range-indicator.visible {
+            opacity: 1;
+        }
+
+        .range-circle {
+            width: clamp(80px, 20vw, 120px);
+            height: clamp(80px, 20vw, 120px);
+            border: 3px dashed rgba(241, 196, 15, 0.6);
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(241, 196, 15, 0.15) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            animation: rangeExpand 0.8s ease-out infinite;
+        }
+
+        @keyframes rangeExpand {
+            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.5; }
+        }
+
+        .range-circle.invalid {
+            border-color: rgba(231, 76, 60, 0.8);
+            background: radial-gradient(circle, rgba(231, 76, 60, 0.15) 0%, transparent 70%);
+        }
+
+        /* Deployment trail effect */
+        .deploy-trail {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--primary-gold);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 997;
+            opacity: 0.6;
+            animation: trailFade 0.3s forwards;
+        }
+
+        @keyframes trailFade {
+            to { opacity: 0; transform: scale(0); }
         }
 
         /* ===== SPAWN INDICATOR ===== */
@@ -623,7 +717,7 @@
             </div>
 
             <div id="cards-container">
-                <div id="instruction">Tap a card, then tap the field to deploy</div>
+                <div id="instruction">Drag cards to the field to deploy</div>
                 <div class="cards-row" id="main-cards">
                     <div class="card" id="card-knight" data-type="knight" data-cost="3">
                         <div class="card-icon">⚔️</div>
@@ -664,7 +758,17 @@
         </div>
 
         <!-- Ghost card for drag preview -->
-        <div id="ghost-card"></div>
+        <div id="ghost-card">
+            <div class="ghost-card-inner">
+                <div class="card-icon">⚔️</div>
+                <div class="card-name">Knight</div>
+            </div>
+        </div>
+
+        <!-- Range indicator -->
+        <div id="range-indicator">
+            <div class="range-circle"></div>
+        </div>
 
         <!-- Spawn indicator -->
         <div id="spawn-indicator"></div>
@@ -737,6 +841,12 @@
                 if (this.ctx) return;
                 this.ctx = new (window.AudioContext || window.webkitAudioContext)();
                 this.enabled = true;
+            },
+
+            vibrate(pattern = 10) {
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(pattern);
+                }
             },
 
             vibrate(pattern = 10) {
@@ -1278,45 +1388,21 @@
             }
         }
 
-        // --- INPUT HANDLING (Touch + Mouse) ---
+        // --- INPUT HANDLING (Drag & Drop + Tap Support) ---
         const raycaster = new THREE.Raycaster();
         const pointer = new THREE.Vector2();
         const ghostCard = document.getElementById('ghost-card');
+        const rangeIndicator = document.getElementById('range-indicator');
         const spawnIndicator = document.getElementById('spawn-indicator');
+        const canvas = document.getElementById('bg');
 
-        // Card selection
-        function selectCard(cardElement) {
-            if (state.isGameOver) return;
-            
-            const type = cardElement.dataset.type;
-            const cost = parseInt(cardElement.dataset.cost);
-            
-            if (state.elixir < cost) {
-                AudioFX.play('error');
-                cardElement.classList.add('haptic-flash');
-                setTimeout(() => cardElement.classList.remove('haptic-flash'), 100);
-                return;
-            }
-            
-            // Deselect previous
-            document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
-            
-            // Select new
-            state.selectedCard = type;
-            cardElement.classList.add('selected');
-            AudioFX.play('select');
-            
-            // Update instruction
-            document.getElementById('instruction').textContent = 'Tap the field to deploy ' + type.toUpperCase();
-        }
-
-        // Deselect card
-        function deselectCard() {
-            state.selectedCard = null;
-            document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
-            spawnIndicator.classList.remove('visible');
-            document.getElementById('instruction').textContent = 'Tap a card, then tap the field to deploy';
-        }
+        // Drag state
+        let isDragging = false;
+        let dragCard = null;
+        let dragType = null;
+        let dragTouchId = null;
+        let dragStartPos = { x: 0, y: 0 };
+        let lastTrailTime = 0;
 
         // Get world position from screen coordinates
         function getWorldPosition(clientX, clientY) {
@@ -1330,9 +1416,153 @@
             return target;
         }
 
-        // Check if position is valid for spawning
+        // Check if position is valid for spawning (player's side)
         function isValidSpawnPosition(point) {
             return point && point.z > 0 && point.z < 15 && Math.abs(point.x) < 11;
+        }
+
+        // Update ghost card position
+        function updateGhostCard(clientX, clientY) {
+            ghostCard.style.left = clientX + 'px';
+            ghostCard.style.top = clientY + 'px';
+        }
+
+        // Update range indicator
+        function updateRangeIndicator(clientX, clientY, valid) {
+            rangeIndicator.style.left = clientX + 'px';
+            rangeIndicator.style.top = clientY + 'px';
+            rangeIndicator.classList.add('visible');
+            
+            const circle = rangeIndicator.querySelector('.range-circle');
+            if (valid) {
+                circle.classList.remove('invalid');
+            } else {
+                circle.classList.add('invalid');
+            }
+        }
+
+        // Create trail effect while dragging
+        function createTrail(clientX, clientY) {
+            const now = Date.now();
+            if (now - lastTrailTime < 30) return;
+            lastTrailTime = now;
+
+            const trail = document.createElement('div');
+            trail.className = 'deploy-trail';
+            trail.style.left = clientX + 'px';
+            trail.style.top = clientY + 'px';
+            document.body.appendChild(trail);
+            
+            setTimeout(() => trail.remove(), 300);
+        }
+
+        // Start dragging
+        function startDrag(cardElement, clientX, clientY, touchId = null) {
+            const type = cardElement.dataset.type;
+            const cost = parseInt(cardElement.dataset.cost);
+            
+            // Check if enough elixir
+            if (state.elixir < cost) {
+                AudioFX.play('error');
+                cardElement.classList.add('haptic-flash');
+                setTimeout(() => cardElement.classList.remove('haptic-flash'), 100);
+                return false;
+            }
+
+            isDragging = true;
+            dragCard = cardElement;
+            dragType = type;
+            dragTouchId = touchId;
+            dragStartPos = { x: clientX, y: clientY };
+
+            // Update ghost card content
+            const config = CONFIG.UNIT_TYPES[type];
+            ghostCard.querySelector('.card-icon').textContent = config.icon;
+            ghostCard.querySelector('.card-name').textContent = type.charAt(0).toUpperCase() + type.slice(1);
+            
+            // Show ghost card
+            updateGhostCard(clientX, clientY);
+            ghostCard.classList.add('visible', 'dragging');
+            
+            // Mark original card as dragging
+            cardElement.classList.add('dragging');
+            
+            // Deselect any selected card
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+            state.selectedCard = null;
+
+            // Update instruction
+            document.getElementById('instruction').textContent = 'Drop on the field to deploy!';
+
+            AudioFX.play('select');
+            AudioFX.vibrate(15);
+
+            return true;
+        }
+
+        // Update drag position
+        function updateDrag(clientX, clientY) {
+            if (!isDragging) return;
+
+            updateGhostCard(clientX, clientY);
+            
+            const point = getWorldPosition(clientX, clientY);
+            const valid = isValidSpawnPosition(point);
+            
+            updateRangeIndicator(clientX, clientY, valid);
+            createTrail(clientX, clientY);
+
+            // Update spawn indicator
+            spawnIndicator.style.left = clientX + 'px';
+            spawnIndicator.style.top = clientY + 'px';
+            spawnIndicator.classList.add('visible');
+            
+            if (valid) {
+                spawnIndicator.classList.remove('invalid');
+            } else {
+                spawnIndicator.classList.add('invalid');
+            }
+        }
+
+        // End drag and potentially spawn
+        function endDrag(clientX, clientY) {
+            if (!isDragging) return;
+
+            const point = getWorldPosition(clientX, clientY);
+            const valid = isValidSpawnPosition(point);
+
+            if (valid && dragType) {
+                // Spawn the unit
+                if (spawnUnit(dragType, point.x, point.z)) {
+                    AudioFX.vibrate(25);
+                }
+            } else if (dragType) {
+                // Invalid position
+                AudioFX.play('error');
+                AudioFX.vibrate([20, 30, 20]);
+            }
+
+            // Clean up drag state
+            cancelDrag();
+        }
+
+        // Cancel drag without spawning
+        function cancelDrag() {
+            isDragging = false;
+            
+            if (dragCard) {
+                dragCard.classList.remove('dragging');
+            }
+            
+            dragCard = null;
+            dragType = null;
+            dragTouchId = null;
+
+            ghostCard.classList.remove('visible', 'dragging');
+            rangeIndicator.classList.remove('visible');
+            spawnIndicator.classList.remove('visible');
+
+            document.getElementById('instruction').textContent = 'Drag cards to the field to deploy';
         }
 
         // Spawn unit at position
@@ -1345,158 +1575,268 @@
             state.elixir -= cost;
             state.unitsDeployed++;
             
-            // Show spawn effect
             showSpawnEffect(x, z);
+            AudioFX.play('spawn');
             
             return true;
         }
 
         // Show spawn effect
         function showSpawnEffect(x, z) {
-            const geo = new THREE.RingGeometry(0.5, 1.5, 16);
+            // Ring effect
+            const geo = new THREE.RingGeometry(0.5, 2, 24);
             const mat = new THREE.MeshBasicMaterial({ 
                 color: 0xf1c40f, 
                 transparent: true, 
-                opacity: 0.8,
+                opacity: 0.9,
                 side: THREE.DoubleSide
             });
             const ring = new THREE.Mesh(geo, mat);
             ring.rotation.x = -Math.PI / 2;
-            ring.position.set(x, 0.1, z);
+            ring.position.set(x, 0.15, z);
             scene.add(ring);
             
+            // Second ring (delayed)
+            const geo2 = new THREE.RingGeometry(0.3, 1.5, 24);
+            const ring2 = new THREE.Mesh(geo2, mat.clone());
+            ring2.rotation.x = -Math.PI / 2;
+            ring2.position.set(x, 0.1, z);
+            scene.add(ring2);
+
             let scale = 1;
+            let scale2 = 0.5;
+            
             const animate = () => {
-                scale += 0.1;
+                scale += 0.12;
+                scale2 += 0.15;
+                
                 ring.scale.set(scale, scale, scale);
-                ring.material.opacity -= 0.05;
-                if (ring.material.opacity > 0) {
+                ring.material.opacity -= 0.06;
+                
+                ring2.scale.set(scale2, scale2, scale2);
+                ring2.material.opacity -= 0.05;
+                
+                if (ring.material.opacity > 0 || ring2.material.opacity > 0) {
                     requestAnimationFrame(animate);
                 } else {
                     scene.remove(ring);
+                    scene.remove(ring2);
                     ring.geometry.dispose();
                     ring.material.dispose();
+                    ring2.geometry.dispose();
+                    ring2.material.dispose();
                 }
             };
             animate();
+
+            // Particle burst
+            for (let i = 0; i < 8; i++) {
+                const particle = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.15, 6, 6),
+                    new THREE.MeshBasicMaterial({ color: 0xf1c40f })
+                );
+                const angle = (i / 8) * Math.PI * 2;
+                particle.position.set(x, 0.5, z);
+                scene.add(particle);
+
+                const vel = {
+                    x: Math.cos(angle) * 0.15,
+                    y: 0.2,
+                    z: Math.sin(angle) * 0.15
+                };
+
+                const animateParticle = () => {
+                    particle.position.x += vel.x;
+                    particle.position.y += vel.y;
+                    particle.position.z += vel.z;
+                    vel.y -= 0.015;
+                    particle.scale.multiplyScalar(0.95);
+
+                    if (particle.position.y > 0) {
+                        requestAnimationFrame(animateParticle);
+                    } else {
+                        scene.remove(particle);
+                        particle.geometry.dispose();
+                        particle.material.dispose();
+                    }
+                };
+                animateParticle();
+            }
         }
 
-        // Card click/tap handlers
+        // ===== TOUCH EVENTS FOR CARDS =====
         document.querySelectorAll('.card').forEach(card => {
-            // Remove draggable attribute for mobile
-            card.removeAttribute('draggable');
-            
-            // Touch events
+            // Touch start - begin drag
             card.addEventListener('touchstart', (e) => {
                 e.preventDefault();
-                selectCard(card);
+                const touch = e.changedTouches[0];
+                startDrag(card, touch.clientX, touch.clientY, touch.identifier);
             }, { passive: false });
+        });
+
+        // Global touch move
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
             
-            // Mouse events
-            card.addEventListener('click', (e) => {
+            for (let touch of e.changedTouches) {
+                if (touch.identifier === dragTouchId) {
+                    e.preventDefault();
+                    updateDrag(touch.clientX, touch.clientY);
+                    break;
+                }
+            }
+        }, { passive: false });
+
+        // Global touch end
+        document.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            
+            for (let touch of e.changedTouches) {
+                if (touch.identifier === dragTouchId) {
+                    endDrag(touch.clientX, touch.clientY);
+                    break;
+                }
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchcancel', (e) => {
+            if (isDragging) {
+                cancelDrag();
+            }
+        }, { passive: false });
+
+        // ===== MOUSE EVENTS FOR CARDS (PC) =====
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('mousedown', (e) => {
                 e.preventDefault();
-                selectCard(card);
+                startDrag(card, e.clientX, e.clientY);
             });
         });
 
-        // Canvas/field interaction
-        const canvas = document.getElementById('bg');
-
-        // Touch events for spawning
-        canvas.addEventListener('touchstart', (e) => {
-            if (!state.selectedCard || state.isGameOver) return;
-            e.preventDefault();
-            
-            const touch = e.touches[0];
-            const point = getWorldPosition(touch.clientX, touch.clientY);
-            
-            if (isValidSpawnPosition(point)) {
-                if (spawnUnit(state.selectedCard, point.x, point.z)) {
-                    deselectCard();
-                }
-            } else {
-                AudioFX.play('error');
-                spawnIndicator.classList.add('invalid');
-                setTimeout(() => spawnIndicator.classList.remove('invalid'), 200);
-            }
-        }, { passive: false });
-
-        // Touch move for spawn indicator
-        canvas.addEventListener('touchmove', (e) => {
-            if (!state.selectedCard) return;
-            e.preventDefault();
-            
-            const touch = e.touches[0];
-            const point = getWorldPosition(touch.clientX, touch.clientY);
-            
-            if (point) {
-                spawnIndicator.style.left = touch.clientX + 'px';
-                spawnIndicator.style.top = touch.clientY + 'px';
-                spawnIndicator.classList.add('visible');
-                
-                if (isValidSpawnPosition(point)) {
-                    spawnIndicator.classList.remove('invalid');
-                } else {
-                    spawnIndicator.classList.add('invalid');
-                }
-            }
-        }, { passive: false });
-
-        canvas.addEventListener('touchend', () => {
-            spawnIndicator.classList.remove('visible');
+        // Global mouse move
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            updateDrag(e.clientX, e.clientY);
         });
 
-        // Mouse events for spawning (PC)
-        canvas.addEventListener('click', (e) => {
-            if (!state.selectedCard || state.isGameOver) return;
-            
-            const point = getWorldPosition(e.clientX, e.clientY);
-            
-            if (isValidSpawnPosition(point)) {
-                if (spawnUnit(state.selectedCard, point.x, point.z)) {
-                    deselectCard();
-                }
-            } else {
-                AudioFX.play('error');
-            }
+        // Global mouse up
+        document.addEventListener('mouseup', (e) => {
+            if (!isDragging) return;
+            endDrag(e.clientX, e.clientY);
         });
 
-        // Mouse move for spawn indicator (PC)
-        canvas.addEventListener('mousemove', (e) => {
-            if (!state.selectedCard) {
-                spawnIndicator.classList.remove('visible');
+        // ===== ALTERNATIVE: TAP TO SELECT, TAP TO DEPLOY =====
+        // For users who prefer tap instead of drag
+
+        // Card selection (double tap or long press alternative)
+        let lastTapTime = 0;
+        let lastTapCard = null;
+
+        function handleCardTap(cardElement, clientX, clientY) {
+            const now = Date.now();
+            const type = cardElement.dataset.type;
+            const cost = parseInt(cardElement.dataset.cost);
+
+            // Check elixir
+            if (state.elixir < cost) {
+                AudioFX.play('error');
                 return;
             }
+
+            // Double tap detection for selection mode
+            if (lastTapCard === cardElement && now - lastTapTime < 300) {
+                // Double tap - select card
+                selectCardForTap(cardElement);
+                lastTapCard = null;
+                return;
+            }
+
+            lastTapTime = now;
+            lastTapCard = cardElement;
+        }
+
+        function selectCardForTap(cardElement) {
+            const type = cardElement.dataset.type;
             
-            const point = getWorldPosition(e.clientX, e.clientY);
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+            cardElement.classList.add('selected');
+            state.selectedCard = type;
             
-            spawnIndicator.style.left = e.clientX + 'px';
-            spawnIndicator.style.top = e.clientY + 'px';
-            spawnIndicator.classList.add('visible');
+            document.getElementById('instruction').textContent = 'Tap the field to deploy ' + type.toUpperCase();
+            AudioFX.play('select');
+        }
+
+        // Canvas tap for deployment when card is selected
+        canvas.addEventListener('click', (e) => {
+            if (isDragging || state.isGameOver) return;
             
-            if (isValidSpawnPosition(point)) {
-                spawnIndicator.classList.remove('invalid');
-            } else {
-                spawnIndicator.classList.add('invalid');
+            // If a card is selected via tap, deploy it
+            if (state.selectedCard) {
+                const point = getWorldPosition(e.clientX, e.clientY);
+                
+                if (isValidSpawnPosition(point)) {
+                    if (spawnUnit(state.selectedCard, point.x, point.z)) {
+                        // Deselect after spawn
+                        document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+                        state.selectedCard = null;
+                        document.getElementById('instruction').textContent = 'Drag cards to the field to deploy';
+                    }
+                } else {
+                    AudioFX.play('error');
+                }
             }
         });
 
-        // Right click / escape to deselect
-        canvas.addEventListener('contextmenu', (e) => {
+        canvas.addEventListener('touchstart', (e) => {
+            if (isDragging || state.isGameOver) return;
+            
+            // If a card is selected via double-tap, deploy it
+            if (state.selectedCard) {
+                e.preventDefault();
+                const touch = e.changedTouches[0];
+                const point = getWorldPosition(touch.clientX, touch.clientY);
+                
+                if (isValidSpawnPosition(point)) {
+                    if (spawnUnit(state.selectedCard, point.x, point.z)) {
+                        document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+                        state.selectedCard = null;
+                        document.getElementById('instruction').textContent = 'Drag cards to the field to deploy';
+                    }
+                } else {
+                    AudioFX.play('error');
+                    AudioFX.vibrate([20, 30, 20]);
+                }
+            }
+        }, { passive: false });
+
+        // Right click to cancel
+        document.addEventListener('contextmenu', (e) => {
             e.preventDefault();
-            deselectCard();
+            if (isDragging) {
+                cancelDrag();
+            }
+            if (state.selectedCard) {
+                document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+                state.selectedCard = null;
+                document.getElementById('instruction').textContent = 'Drag cards to the field to deploy';
+            }
         });
 
+        // Escape to cancel
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
-                deselectCard();
+                cancelDrag();
+                document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+                state.selectedCard = null;
+                document.getElementById('instruction').textContent = 'Drag cards to the field to deploy';
             }
-            // Number keys to select cards
+            
+            // Number keys to quick-select cards
             if (e.key >= '1' && e.key <= '4') {
                 const cardIndex = parseInt(e.key) - 1;
                 const cards = document.querySelectorAll('#main-cards .card');
                 if (cards[cardIndex]) {
-                    selectCard(cards[cardIndex]);
+                    selectCardForTap(cards[cardIndex]);
                 }
             }
         });
