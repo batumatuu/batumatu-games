@@ -3,7 +3,14 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="theme-color" content="#0b141d">
+    <meta name="msapplication-navbutton-color" content="#0b141d">
+    <meta name="apple-mobile-web-app-title" content="Valorant Range">
     <title>Valorant FPS Prototype v4</title>
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
@@ -15,45 +22,76 @@
             -webkit-tap-highlight-color: transparent;
             -webkit-touch-callout: none;
             -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
             user-select: none;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+
+        html {
+            height: 100%;
+            height: -webkit-fill-available;
+            overflow: hidden;
         }
 
         body {
             margin: 0;
+            padding: 0;
             overflow: hidden;
-            font-family: 'Outfit', 'Segoe UI', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             background: #0b141d;
             touch-action: none;
             position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             width: 100%;
             height: 100%;
+            height: -webkit-fill-available;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: none;
         }
 
         #canvas-container {
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             height: calc(var(--vh, 1vh) * 100);
             position: fixed;
             top: 0;
             left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+        }
+
+        #canvas-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+            touch-action: none;
         }
 
         /* HUD Styles */
         #hud {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            height: calc(var(--vh, 1vh) * 100);
             pointer-events: none;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: max(10px, env(safe-area-inset-top, 10px)) max(15px, env(safe-area-inset-right, 15px)) max(10px, env(safe-area-inset-bottom, 10px)) max(15px, env(safe-area-inset-left, 15px));
+            padding: max(8px, env(safe-area-inset-top, 8px)) max(8px, env(safe-area-inset-right, 8px)) max(8px, env(safe-area-inset-bottom, 8px)) max(8px, env(safe-area-inset-left, 8px));
+            padding-bottom: max(12px, calc(env(safe-area-inset-bottom, 8px) + 4px));
             box-sizing: border-box;
             color: white;
             transition: opacity 0.3s;
             z-index: 10;
+            overflow: hidden;
         }
 
         #crosshair {
@@ -116,7 +154,10 @@
             justify-content: space-between;
             align-items: flex-end;
             width: 100%;
-            gap: 10px;
+            gap: clamp(5px, 2vw, 10px);
+            padding-bottom: env(safe-area-inset-bottom, 0);
+            flex-wrap: nowrap;
+            min-height: 0;
         }
 
         #health-wrapper {
@@ -168,8 +209,8 @@
         }
 
         #shield-container {
-            width: clamp(120px, 28vw, 320px);
-            height: clamp(12px, 2vh, 20px);
+            width: clamp(90px, 25vw, 320px);
+            height: clamp(10px, 1.8vh, 20px);
             background: rgba(0, 0, 0, 0.4);
             border-left: clamp(2px, 0.4vw, 3px) solid #5eb5f0;
             position: relative;
@@ -187,44 +228,61 @@
         #shield-text {
             position: absolute;
             top: 50%;
-            left: clamp(6px, 2vw, 20px);
+            left: clamp(5px, 1.5vw, 20px);
             transform: translateY(-50%);
             font-weight: 800;
-            font-size: clamp(0.45rem, 1.4vw, 0.8rem);
+            font-size: clamp(0.4rem, 1.2vw, 0.8rem);
             color: #fff;
         }
 
         #ammo-container {
             text-align: right;
             background: rgba(0, 0, 0, 0.6);
-            padding: clamp(8px, 2vw, 15px) clamp(12px, 3vw, 30px);
+            padding: clamp(5px, 1.5vw, 15px) clamp(8px, 2vw, 30px);
             border-radius: 0;
-            border-right: 3px solid #ff4655;
+            border-right: clamp(2px, 0.4vw, 3px) solid #ff4655;
             clip-path: polygon(5% 0, 100% 0, 100% 100%, 0% 100%);
             flex-shrink: 0;
             display: flex;
             align-items: baseline;
-            gap: 4px;
+            gap: clamp(2px, 0.5vw, 4px);
         }
 
         #ammo-current {
-            font-size: clamp(1.5rem, 5vw, 3rem);
+            font-size: clamp(1.1rem, 4vw, 3rem);
             font-weight: 900;
             color: #fff;
             line-height: 1;
         }
 
         #ammo-divider {
-            font-size: clamp(1rem, 3vw, 1.8rem);
+            font-size: clamp(0.7rem, 2vw, 1.8rem);
             color: #555;
             font-weight: 300;
-            margin: 0 2px;
+            margin: 0 1px;
         }
 
         #ammo-total {
-            font-size: clamp(0.8rem, 2.5vw, 1.4rem);
+            font-size: clamp(0.6rem, 1.8vw, 1.4rem);
             color: #555;
             font-weight: 700;
+        }
+
+        #ammo-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            flex-shrink: 0;
+            max-width: 40vw;
+        }
+
+        #weapon-name {
+            font-size: clamp(0.35rem, 0.9vw, 0.6rem);
+            color: #777;
+            letter-spacing: clamp(1px, 0.2vw, 2px);
+            text-transform: uppercase;
+            text-align: right;
+            margin-top: 1px;
         }
 
         #ammo-wrapper {
@@ -560,11 +618,12 @@
         }
 
         .overlay-screen {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            height: calc(var(--vh, 1vh) * 100);
             background: linear-gradient(135deg, rgba(11, 20, 29, 0.97) 0%, rgba(20, 10, 15, 0.97) 100%);
             display: flex;
             flex-direction: column;
@@ -572,8 +631,12 @@
             justify-content: center;
             z-index: 100;
             text-align: center;
-            padding: 20px;
+            padding: clamp(15px, 5vw, 30px);
+            padding-top: max(20px, env(safe-area-inset-top, 20px));
+            padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
             box-sizing: border-box;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .overlay-screen::before {
@@ -605,19 +668,21 @@
             background: #ff4655;
             color: white;
             border: none;
-            padding: clamp(14px, 3vw, 20px) clamp(35px, 8vw, 60px);
-            font-size: clamp(0.8rem, 2.5vw, 1.1rem);
+            padding: clamp(12px, 2.5vw, 20px) clamp(28px, 7vw, 60px);
+            font-size: clamp(0.7rem, 2.2vw, 1.1rem);
             font-weight: 900;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: clamp(15px, 4vw, 25px);
             transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
             text-transform: uppercase;
-            letter-spacing: 4px;
+            letter-spacing: clamp(2px, 0.5vw, 4px);
             pointer-events: auto;
             touch-action: manipulation;
             clip-path: polygon(0 0, 100% 0, 95% 100%, 5% 100%);
             position: relative;
             overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 44px; /* iOS minimum touch target */
         }
 
         button::before {
@@ -716,24 +781,53 @@
         }
 
         #start-overlay h1 {
-            font-size: clamp(1.5rem, 6vw, 3rem) !important;
+            font-size: clamp(1.3rem, 5.5vw, 3rem) !important;
+            letter-spacing: clamp(3px, 1vw, 8px) !important;
         }
 
         #start-overlay p {
-            font-size: clamp(0.8rem, 2.5vw, 1.2rem) !important;
-            padding: 0 15px;
+            font-size: clamp(0.6rem, 2vw, 1rem) !important;
+            padding: 0 10px;
+            line-height: 1.5;
+        }
+
+        /* Mobile-specific start overlay */
+        @media (max-width: 480px) {
+            #start-overlay > div:first-child {
+                transform: scale(0.8);
+            }
+            #start-overlay h1 {
+                margin-top: 5px !important;
+            }
+        }
+
+        @media (max-height: 400px) {
+            #start-overlay h1 {
+                font-size: 1.2rem !important;
+                margin: 5px 0 !important;
+            }
+            #start-overlay p {
+                font-size: 0.55rem !important;
+                margin: 3px 0 !important;
+            }
+            #start-overlay button {
+                padding: 10px 25px !important;
+                margin-top: 10px !important;
+            }
         }
 
         /* ===== MOBILE TOUCH CONTROLS ===== */
         #mobile-controls {
             display: none;
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            height: calc(var(--vh, 1vh) * 100);
             pointer-events: none;
             z-index: 15;
+            overflow: hidden;
         }
 
         .mobile-visible #mobile-controls {
@@ -742,10 +836,10 @@
 
         #joystick-zone {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
-            width: clamp(100px, 25vw, 150px);
-            height: clamp(100px, 25vw, 150px);
+            bottom: calc(env(safe-area-inset-bottom, 15px) + 15px);
+            left: calc(env(safe-area-inset-left, 10px) + 10px);
+            width: clamp(80px, 22vw, 130px);
+            height: clamp(80px, 22vw, 130px);
             pointer-events: auto;
             touch-action: none;
             z-index: 16;
@@ -756,28 +850,30 @@
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.08);
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.06);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
         }
 
         #joystick-thumb {
             position: absolute;
-            width: 40%;
-            height: 40%;
+            width: 45%;
+            height: 45%;
             border-radius: 50%;
-            background: rgba(255, 70, 85, 0.6);
+            background: radial-gradient(circle, rgba(255,70,85,0.8) 0%, rgba(255,70,85,0.5) 100%);
             border: 2px solid rgba(255, 70, 85, 0.9);
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             transition: none;
+            box-shadow: 0 2px 10px rgba(255,70,85,0.4);
         }
 
         #touch-look-zone {
             position: absolute;
             top: 0;
             right: 0;
-            width: 55%;
+            width: 50%;
             height: 100%;
             pointer-events: auto;
             touch-action: none;
@@ -786,75 +882,108 @@
 
         #fire-btn {
             position: absolute;
-            bottom: clamp(30px, 8vh, 60px);
-            right: clamp(20px, 4vw, 40px);
-            width: clamp(60px, 15vw, 80px);
-            height: clamp(60px, 15vw, 80px);
+            bottom: calc(env(safe-area-inset-bottom, 15px) + 20px);
+            right: calc(env(safe-area-inset-right, 10px) + 15px);
+            width: clamp(55px, 14vw, 75px);
+            height: clamp(55px, 14vw, 75px);
             border-radius: 50%;
-            background: rgba(255, 70, 85, 0.5);
+            background: radial-gradient(circle, rgba(255,70,85,0.6) 0%, rgba(255,70,85,0.4) 100%);
             border: 3px solid rgba(255, 70, 85, 0.9);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(0.6rem, 2vw, 0.8rem);
+            font-size: clamp(0.5rem, 1.8vw, 0.75rem);
             font-weight: 900;
+            letter-spacing: 1px;
             color: white;
             pointer-events: auto;
             touch-action: none;
             z-index: 17;
             text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 15px rgba(255,70,85,0.3);
+            transition: transform 0.1s, background 0.1s;
         }
 
         #fire-btn:active {
-            background: rgba(255, 70, 85, 0.8);
-            transform: scale(0.9);
+            background: radial-gradient(circle, rgba(255,70,85,0.9) 0%, rgba(255,70,85,0.7) 100%);
+            transform: scale(0.92);
         }
 
         #reload-btn {
             position: absolute;
-            bottom: clamp(110px, 22vh, 160px);
-            right: clamp(25px, 5vw, 50px);
-            width: clamp(44px, 10vw, 55px);
-            height: clamp(44px, 10vw, 55px);
+            bottom: calc(env(safe-area-inset-bottom, 15px) + clamp(85px, 18vh, 130px));
+            right: calc(env(safe-area-inset-right, 10px) + 20px);
+            width: clamp(38px, 9vw, 50px);
+            height: clamp(38px, 9vw, 50px);
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.12);
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.25);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(0.55rem, 1.8vw, 0.7rem);
+            font-size: clamp(0.5rem, 1.5vw, 0.65rem);
             font-weight: 700;
             color: white;
             pointer-events: auto;
             touch-action: none;
             z-index: 17;
+            transition: transform 0.1s, background 0.1s;
         }
 
         #reload-btn:active {
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(0.92);
         }
 
         #jump-btn {
             position: absolute;
-            bottom: clamp(30px, 8vh, 60px);
-            right: clamp(100px, 22vw, 140px);
-            width: clamp(44px, 10vw, 55px);
-            height: clamp(44px, 10vw, 55px);
+            bottom: calc(env(safe-area-inset-bottom, 15px) + 20px);
+            right: calc(env(safe-area-inset-right, 10px) + clamp(80px, 18vw, 110px));
+            width: clamp(38px, 9vw, 50px);
+            height: clamp(38px, 9vw, 50px);
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.12);
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.25);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(1rem, 3vw, 1.3rem);
+            font-size: clamp(0.8rem, 2.5vw, 1.1rem);
             color: white;
             pointer-events: auto;
             touch-action: none;
             z-index: 17;
+            transition: transform 0.1s, background 0.1s;
         }
 
         #jump-btn:active {
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(0.92);
+        }
+
+        /* Crouch button */
+        #crouch-btn {
+            position: absolute;
+            bottom: calc(env(safe-area-inset-bottom, 15px) + clamp(85px, 18vh, 130px));
+            right: calc(env(safe-area-inset-right, 10px) + clamp(80px, 18vw, 110px));
+            width: clamp(38px, 9vw, 50px);
+            height: clamp(38px, 9vw, 50px);
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(0.8rem, 2.5vw, 1.1rem);
+            color: white;
+            pointer-events: auto;
+            touch-action: none;
+            z-index: 17;
+            transition: transform 0.1s, background 0.1s;
+        }
+
+        #crouch-btn:active {
+            background: rgba(255, 255, 255, 0.25);
+            transform: scale(0.92);
         }
 
         /* Desktop-only: hide mobile controls */
@@ -864,116 +993,309 @@
             }
         }
 
-        /* Landscape phone tweaks */
+        /* Touch devices */
+        @media (hover: none) and (pointer: coarse) {
+            #mobile-controls {
+                display: block !important;
+            }
+        }
+
+        /* ===== iOS SPECIFIC ===== */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                /* iOS specific fixes */
+                position: fixed;
+                width: 100%;
+                height: 100%;
+            }
+            #canvas-container {
+                height: -webkit-fill-available;
+            }
+        }
+
+        /* ===== LANDSCAPE PHONES (iPhone, Android) ===== */
         @media (max-height: 500px) and (orientation: landscape) {
             #hud {
-                padding: 4px max(8px, env(safe-area-inset-right, 8px)) 4px max(8px, env(safe-area-inset-left, 8px));
+                padding: 3px max(6px, env(safe-area-inset-right, 6px)) 3px max(6px, env(safe-area-inset-left, 6px));
             }
             #bottom-ui {
                 margin-bottom: 0;
+                gap: 5px;
+            }
+            #health-wrapper {
+                gap: 1px;
+            }
+            #health-container {
+                width: clamp(70px, 20vw, 200px);
+                height: clamp(18px, 4vh, 30px);
+            }
+            #health-text {
+                font-size: clamp(0.65rem, 2.5vw, 1.2rem);
+            }
+            #shield-container {
+                width: clamp(70px, 20vw, 200px);
+                height: clamp(8px, 1.5vh, 14px);
+            }
+            #shield-text {
+                font-size: clamp(0.35rem, 1vw, 0.6rem);
+            }
+            #ammo-container {
+                padding: 4px 8px;
+            }
+            #ammo-current {
+                font-size: clamp(0.9rem, 3.5vw, 2rem);
             }
             #joystick-zone {
-                bottom: 8px;
-                left: max(8px, env(safe-area-inset-left, 8px));
-                width: 80px;
-                height: 80px;
+                bottom: calc(env(safe-area-inset-bottom, 5px) + 5px);
+                left: calc(env(safe-area-inset-left, 5px) + 5px);
+                width: clamp(65px, 18vw, 90px);
+                height: clamp(65px, 18vw, 90px);
             }
             #fire-btn {
-                bottom: 12px;
-                right: max(12px, env(safe-area-inset-right, 12px));
-                width: 55px;
-                height: 55px;
+                bottom: calc(env(safe-area-inset-bottom, 5px) + 8px);
+                right: calc(env(safe-area-inset-right, 5px) + 10px);
+                width: clamp(48px, 12vw, 60px);
+                height: clamp(48px, 12vw, 60px);
+                font-size: 0.45rem;
             }
             #reload-btn {
-                bottom: 75px;
-                right: max(18px, env(safe-area-inset-right, 18px));
-                width: 36px;
-                height: 36px;
+                bottom: calc(env(safe-area-inset-bottom, 5px) + 65px);
+                right: calc(env(safe-area-inset-right, 5px) + 15px);
+                width: clamp(32px, 8vw, 42px);
+                height: clamp(32px, 8vw, 42px);
             }
             #jump-btn {
-                bottom: 12px;
-                right: max(80px, calc(env(safe-area-inset-right, 12px) + 68px));
-                width: 36px;
-                height: 36px;
+                bottom: calc(env(safe-area-inset-bottom, 5px) + 8px);
+                right: calc(env(safe-area-inset-right, 5px) + clamp(65px, 15vw, 85px));
+                width: clamp(32px, 8vw, 42px);
+                height: clamp(32px, 8vw, 42px);
+            }
+            #crouch-btn {
+                bottom: calc(env(safe-area-inset-bottom, 5px) + 65px);
+                right: calc(env(safe-area-inset-right, 5px) + clamp(65px, 15vw, 85px));
+                width: clamp(32px, 8vw, 42px);
+                height: clamp(32px, 8vw, 42px);
             }
             #ability-bar {
                 display: none;
             }
             #minimap {
-                width: 50px;
-                height: 50px;
-                top: max(35px, calc(env(safe-area-inset-top, 8px) + 30px));
+                width: clamp(40px, 10vw, 55px);
+                height: clamp(40px, 10vw, 55px);
+                top: calc(env(safe-area-inset-top, 5px) + 28px);
             }
             #round-info {
-                padding: 3px 10px;
+                padding: 2px 8px;
             }
-            #health-container {
-                height: clamp(22px, 4vh, 35px);
-            }
-            #shield-container {
-                height: clamp(10px, 1.8vh, 16px);
+            #round-timer {
+                font-size: clamp(0.7rem, 2vw, 1.1rem);
             }
             #stats-display {
                 display: none;
             }
+            #team-status {
+                display: none;
+            }
+            #kill-feed {
+                max-width: 30vw;
+            }
+            .kill-entry {
+                padding: 2px 6px;
+                font-size: 0.4rem;
+            }
+            #weapon-name {
+                display: none;
+            }
+            #health-label {
+                display: none;
+            }
         }
 
-        /* Small screens (phones) */
-        @media (max-width: 480px) {
+        /* ===== LANDSCAPE PHONES VERY SHORT (iPhone SE landscape, etc) ===== */
+        @media (max-height: 380px) and (orientation: landscape) {
+            #bottom-ui {
+                padding-bottom: 0;
+            }
+            #health-container {
+                width: clamp(60px, 18vw, 150px);
+                height: clamp(16px, 3.5vh, 25px);
+            }
+            #shield-container {
+                display: none;
+            }
+            #joystick-zone {
+                width: 60px;
+                height: 60px;
+            }
+            #fire-btn {
+                width: 45px;
+                height: 45px;
+            }
+            #reload-btn, #jump-btn, #crouch-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 0.4rem;
+            }
+            #minimap {
+                width: 35px;
+                height: 35px;
+                top: 25px;
+            }
+            #crosshair {
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+        }
+
+        /* ===== PORTRAIT PHONES ===== */
+        @media (max-width: 480px) and (orientation: portrait) {
             #ability-bar {
-                bottom: clamp(48px, 9vh, 65px);
+                bottom: clamp(45px, 8vh, 60px);
             }
             .ability-slot .key-hint {
                 display: none;
             }
             .ability-slot {
-                width: 26px;
-                height: 26px;
-                font-size: 0.5rem;
+                width: clamp(22px, 7vw, 30px);
+                height: clamp(22px, 7vw, 30px);
+                font-size: 0.45rem;
             }
             #minimap {
-                width: 55px;
-                height: 55px;
+                width: clamp(50px, 14vw, 65px);
+                height: clamp(50px, 14vw, 65px);
             }
             #kill-feed {
-                max-width: 40vw;
+                max-width: 45vw;
             }
             #stats-display {
-                padding: 3px 10px;
-                gap: 10px;
+                padding: 2px 8px;
+                gap: 8px;
+                font-size: 0.45rem;
+            }
+            #team-status {
+                display: none;
             }
         }
 
-        /* Very small screens */
-        @media (max-width: 360px) {
+        /* ===== VERY SMALL PHONES (iPhone SE, small Android) ===== */
+        @media (max-width: 375px) {
             #ability-bar {
                 gap: 2px;
             }
             .ability-slot {
-                width: 24px;
-                height: 24px;
+                width: 20px;
+                height: 20px;
+                font-size: 0.4rem;
             }
             #health-container {
-                width: clamp(100px, 26vw, 280px);
+                width: clamp(80px, 24vw, 200px);
             }
             #shield-container {
-                width: clamp(100px, 26vw, 280px);
+                width: clamp(80px, 24vw, 200px);
             }
             #minimap {
                 width: 45px;
                 height: 45px;
             }
+            #ammo-current {
+                font-size: 1rem;
+            }
+            #ammo-total {
+                font-size: 0.55rem;
+            }
+            #round-timer {
+                font-size: 0.8rem;
+            }
+            .score-team {
+                font-size: 0.9rem;
+            }
         }
 
-        /* Tablet landscape */
-        @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+        /* ===== VERY SMALL PHONES WIDTH ===== */
+        @media (max-width: 320px) {
+            #health-container {
+                width: 70px;
+            }
+            #shield-container {
+                width: 70px;
+            }
+            #ammo-container {
+                padding: 4px 6px;
+            }
+            #minimap {
+                width: 40px;
+                height: 40px;
+            }
+            #ability-bar {
+                display: none;
+            }
+        }
+
+        /* ===== TABLET PORTRAIT ===== */
+        @media (min-width: 481px) and (max-width: 1024px) and (orientation: portrait) {
             #joystick-zone {
-                width: 120px;
-                height: 120px;
+                width: clamp(100px, 15vw, 140px);
+                height: clamp(100px, 15vw, 140px);
             }
             #fire-btn {
-                width: 70px;
-                height: 70px;
+                width: clamp(65px, 10vw, 85px);
+                height: clamp(65px, 10vw, 85px);
+            }
+            #reload-btn, #jump-btn, #crouch-btn {
+                width: clamp(45px, 7vw, 60px);
+                height: clamp(45px, 7vw, 60px);
+            }
+        }
+
+        /* ===== TABLET LANDSCAPE ===== */
+        @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
+            #joystick-zone {
+                width: clamp(100px, 12vw, 130px);
+                height: clamp(100px, 12vw, 130px);
+            }
+            #fire-btn {
+                width: clamp(60px, 8vw, 80px);
+                height: clamp(60px, 8vw, 80px);
+            }
+            #reload-btn, #jump-btn, #crouch-btn {
+                width: clamp(42px, 5vw, 55px);
+                height: clamp(42px, 5vw, 55px);
+            }
+        }
+
+        /* ===== iPHONE X/11/12/13/14 NOTCH ===== */
+        @media (max-height: 500px) and (orientation: landscape) {
+            @supports (padding-left: env(safe-area-inset-left)) {
+                #joystick-zone {
+                    left: calc(env(safe-area-inset-left, 0px) + 8px);
+                }
+                #fire-btn, #reload-btn {
+                    right: calc(env(safe-area-inset-right, 0px) + 10px);
+                }
+            }
+        }
+
+        /* ===== FOLDABLE PHONES ===== */
+        @media (min-width: 600px) and (max-width: 900px) and (min-height: 250px) and (max-height: 450px) {
+            #joystick-zone {
+                width: 85px;
+                height: 85px;
+            }
+            #fire-btn {
+                width: 55px;
+                height: 55px;
+            }
+        }
+
+        /* ===== HIGH DPI SCREENS ===== */
+        @media (-webkit-min-device-pixel-ratio: 3), (min-resolution: 3dppx) {
+            .ch-line {
+                width: 1.5px;
+            }
+            .ch-v {
+                height: 5px;
+            }
+            .ch-h {
+                width: 5px;
             }
         }
 
@@ -985,36 +1307,57 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(11, 20, 29, 0.97);
+            height: calc(var(--vh, 1vh) * 100);
+            background: linear-gradient(135deg, rgba(11, 20, 29, 0.98) 0%, rgba(20, 10, 15, 0.98) 100%);
             z-index: 9999;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             color: white;
             text-align: center;
-            padding: 20px;
+            padding: 30px;
+            box-sizing: border-box;
         }
 
         #rotate-warning .rotate-icon {
-            font-size: 4rem;
-            margin-bottom: 20px;
+            font-size: clamp(3rem, 12vw, 5rem);
+            margin-bottom: 25px;
             animation: rotatePhone 2s infinite ease-in-out;
         }
 
         @keyframes rotatePhone {
             0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(90deg); }
+            25% { transform: rotate(15deg); }
+            75% { transform: rotate(90deg); }
+        }
+
+        #rotate-warning h2 {
+            font-size: clamp(1.2rem, 5vw, 1.8rem);
+            color: #ff4655;
+            font-weight: 900;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
         }
 
         #rotate-warning p {
-            font-size: 1.2rem;
-            color: #ff4655;
-            font-weight: 700;
+            font-size: clamp(0.75rem, 3vw, 1rem);
+            color: #888;
+            font-weight: 400;
+            max-width: 280px;
+            line-height: 1.5;
         }
 
-        @media (orientation: portrait) and (max-width: 768px) {
+        /* Show rotate warning on portrait phones */
+        @media (orientation: portrait) and (max-width: 768px) and (hover: none) {
             #rotate-warning {
                 display: flex;
+            }
+        }
+
+        /* Hide rotate warning on tablets in portrait (playable) */
+        @media (orientation: portrait) and (min-width: 600px) and (min-height: 800px) {
+            #rotate-warning {
+                display: none;
             }
         }
     </style>
@@ -1172,11 +1515,13 @@
         <div id="fire-btn">FIRE</div>
         <div id="reload-btn">R</div>
         <div id="jump-btn">▲</div>
+        <div id="crouch-btn">▼</div>
     </div>
 
     <div id="rotate-warning">
         <div class="rotate-icon">📱</div>
-        <p>ROTATE YOUR DEVICE TO LANDSCAPE</p>
+        <h2>ROTATE YOUR DEVICE</h2>
+        <p>For the best experience, please rotate your device to landscape mode</p>
     </div>
 
     <div id="canvas-container"></div>
@@ -1194,10 +1539,34 @@
         import * as THREE from 'three';
         import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
-        // --- DEVICE DETECTION ---
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-            || ('ontouchstart' in window && navigator.maxTouchPoints > 1)
-            || (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
+        // --- DEVICE DETECTION (iOS & Android) ---
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        const isMobile = isIOS || isAndroid ||
+            /webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+            ('ontouchstart' in window && navigator.maxTouchPoints > 1) ||
+            (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
+        
+        // Detect if in standalone/PWA mode
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+            window.navigator.standalone === true;
+        
+        // Prevent pull-to-refresh on mobile
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 1) return; // Allow pinch zoom
+            const touch = e.touches[0];
+            if (touch.clientY > 0 && document.body.scrollTop === 0) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Prevent iOS bounce effect
+        document.body.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) {
+                e.preventDefault(); // Prevent pinch zoom in game
+            }
+        }, { passive: false });
 
         // --- VIEWPORT HEIGHT FIX (mobile address bar) ---
         function setVH() {
@@ -3479,7 +3848,9 @@
 
             _setupLook() {
                 const zone = this.touchLookZone;
-                const sensitivity = 0.25;
+                // Different sensitivity for iOS vs Android
+                const sensitivity = isIOS ? 0.22 : 0.28;
+                const dampening = isIOS ? 0.92 : 0.88;
 
                 zone.addEventListener('touchstart', (e) => {
                     e.preventDefault();
@@ -3518,15 +3889,30 @@
                 zone.addEventListener('touchcancel', resetLook, { passive: false });
             }
 
+            // Haptic feedback helper
+            _vibrate(pattern = 10) {
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(pattern);
+                }
+                // iOS haptic (requires user gesture)
+                if (window.webkit && window.webkit.messageHandlers) {
+                    // For WKWebView apps
+                }
+            }
+
             _setupButtons() {
                 // Fire button - continuous fire while held
                 let fireInterval = null;
                 this.fireBtn.addEventListener('touchstart', (e) => {
                     e.preventDefault();
+                    this._vibrate(15);
                     this.isFiring = true;
                     this.game.player.weapon.fire();
                     fireInterval = setInterval(() => {
-                        if (this.isFiring) this.game.player.weapon.fire();
+                        if (this.isFiring) {
+                            this.game.player.weapon.fire();
+                            this._vibrate(8);
+                        }
                     }, 100);
                 }, { passive: false });
 
@@ -3541,14 +3927,26 @@
                 // Reload button
                 this.reloadBtn.addEventListener('touchstart', (e) => {
                     e.preventDefault();
+                    this._vibrate(20);
                     this.game.player.weapon.reload();
                 }, { passive: false });
 
-                // Jump button (placeholder - no jump mechanic yet, but ready)
+                // Jump button
                 this.jumpBtn.addEventListener('touchstart', (e) => {
                     e.preventDefault();
-                    // Could add jump functionality here
+                    this._vibrate(15);
+                    // Jump functionality placeholder
                 }, { passive: false });
+
+                // Crouch button
+                const crouchBtn = document.getElementById('crouch-btn');
+                if (crouchBtn) {
+                    crouchBtn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this._vibrate(15);
+                        // Crouch functionality placeholder
+                    }, { passive: false });
+                }
             }
 
             update(dt) {
@@ -3639,20 +4037,31 @@
                     const jx = mc.joystickInput.x;
                     const jy = mc.joystickInput.y;
 
-                    // Look
-                    if (Math.abs(mc.lookInput.x) > 0.01 || Math.abs(mc.lookInput.y) > 0.01) {
+                    // Look - smooth and responsive
+                    if (Math.abs(mc.lookInput.x) > 0.005 || Math.abs(mc.lookInput.y) > 0.005) {
                         this._euler.setFromQuaternion(this.camera.quaternion);
-                        this._euler.y -= mc.lookInput.x * 0.01;
-                        this._euler.x -= mc.lookInput.y * 0.01;
-                        this._euler.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, this._euler.x));
+                        
+                        // Adjust sensitivity based on screen size
+                        const screenScale = Math.min(window.innerWidth, window.innerHeight) / 400;
+                        const lookSensitivity = 0.012 * screenScale;
+                        
+                        this._euler.y -= mc.lookInput.x * lookSensitivity;
+                        this._euler.x -= mc.lookInput.y * lookSensitivity;
+                        
+                        // Clamp vertical look
+                        this._euler.x = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, this._euler.x));
                         this.camera.quaternion.setFromEuler(this._euler);
 
-                        this.mouseMoveX = mc.lookInput.x * 3;
-                        this.mouseMoveY = mc.lookInput.y * 3;
+                        this.mouseMoveX = mc.lookInput.x * 2.5;
+                        this.mouseMoveY = mc.lookInput.y * 2.5;
                     }
 
                     // Movement relative to camera direction
-                    if (Math.abs(jx) > 0.1 || Math.abs(jy) > 0.1) {
+                    const deadzone = 0.15;
+                    const jxClamped = Math.abs(jx) > deadzone ? jx : 0;
+                    const jyClamped = Math.abs(jy) > deadzone ? jy : 0;
+                    
+                    if (Math.abs(jxClamped) > 0 || Math.abs(jyClamped) > 0) {
                         const forward = new THREE.Vector3();
                         this.camera.getWorldDirection(forward);
                         forward.y = 0;
@@ -3662,11 +4071,15 @@
                         right.crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
 
                         const moveDir = new THREE.Vector3();
-                        moveDir.addScaledVector(forward, -jy);
-                        moveDir.addScaledVector(right, jx);
-                        moveDir.normalize();
+                        moveDir.addScaledVector(forward, -jyClamped);
+                        moveDir.addScaledVector(right, jxClamped);
+                        
+                        // Apply magnitude for analog movement
+                        const magnitude = Math.min(1, Math.sqrt(jxClamped * jxClamped + jyClamped * jyClamped));
+                        moveDir.normalize().multiplyScalar(magnitude);
 
-                        const speed = 12 * dt;
+                        const baseSpeed = 10;
+                        const speed = baseSpeed * magnitude * dt;
                         const newX = this.camera.position.x + moveDir.x * speed;
                         const newZ = this.camera.position.z + moveDir.z * speed;
 
@@ -3757,12 +4170,43 @@
                 this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
                 this.camera.position.set(0, 1.7, 5);
 
-                const pixelRatio = isMobile ? Math.min(window.devicePixelRatio, 2) : window.devicePixelRatio;
-                this.renderer = new THREE.WebGLRenderer({ antialias: !isMobile, powerPreference: isMobile ? 'high-performance' : 'default' });
+                // Optimize pixel ratio for mobile performance
+                let pixelRatio;
+                if (isMobile) {
+                    // Lower pixel ratio for older devices
+                    const isOlderDevice = window.innerWidth < 375 || 
+                        (isAndroid && window.devicePixelRatio > 3);
+                    pixelRatio = isOlderDevice ? 1 : Math.min(window.devicePixelRatio, 2);
+                } else {
+                    pixelRatio = Math.min(window.devicePixelRatio, 2);
+                }
+                
+                this.renderer = new THREE.WebGLRenderer({ 
+                    antialias: !isMobile,
+                    powerPreference: isMobile ? 'high-performance' : 'default',
+                    alpha: false,
+                    stencil: false,
+                    depth: true,
+                    preserveDrawingBuffer: false
+                });
                 this.renderer.setPixelRatio(pixelRatio);
                 this.renderer.setSize(window.innerWidth, window.innerHeight);
-                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.enabled = !isMobile || window.devicePixelRatio <= 2;
+                if (this.renderer.shadowMap.enabled) {
+                    this.renderer.shadowMap.type = isMobile ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
+                }
+                
+                // Optimize for mobile
+                if (isMobile) {
+                    this.renderer.sortObjects = false;
+                }
+                
                 document.getElementById('canvas-container').appendChild(this.renderer.domElement);
+                
+                // Make canvas fill container properly
+                this.renderer.domElement.style.width = '100%';
+                this.renderer.domElement.style.height = '100%';
+                this.renderer.domElement.style.display = 'block';
 
                 this.loader = new AssetLoader();
                 this.input = { keys: {}, isPressed(c) { return !!this.keys[c]; } };
@@ -3820,9 +4264,23 @@
             }
 
             _onResize() {
-                const w = window.innerWidth;
-                const h = window.innerHeight;
+                // Use visualViewport for accurate mobile dimensions
+                const w = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+                const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+                
                 this.camera.aspect = w / h;
+                
+                // Adjust FOV for mobile portrait/landscape
+                if (isMobile) {
+                    if (w < h) {
+                        // Portrait - wider FOV
+                        this.camera.fov = 85;
+                    } else {
+                        // Landscape
+                        this.camera.fov = w / h < 1.5 ? 80 : 75;
+                    }
+                }
+                
                 this.camera.updateProjectionMatrix();
                 this.renderer.setSize(w, h);
                 setVH();
