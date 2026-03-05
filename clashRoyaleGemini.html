@@ -3,7 +3,13 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="msapplication-navbutton-color" content="#1a1a1a">
     <title>Clash Royale Prototype | Antigravity</title>
     <style>
         :root {
@@ -12,56 +18,103 @@
             --primary-gold: #f1c40f;
             --glass-bg: rgba(255, 255, 255, 0.1);
             --glass-border: rgba(255, 255, 255, 0.2);
-            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --vh: 1vh;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left: env(safe-area-inset-left, 0px);
+            --safe-right: env(safe-area-inset-right, 0px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        html {
+            height: 100%;
+            height: -webkit-fill-available;
+            overflow: hidden;
         }
 
         body {
             margin: 0;
+            padding: 0;
             overflow: hidden;
             background: #1a1a1a;
             font-family: var(--font-main);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            height: -webkit-fill-available;
+            touch-action: none;
+            overscroll-behavior: none;
         }
 
         #game-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-        }
-
-        #bg {
-            display: block;
-        }
-
-        #ui-layer {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            height: calc(var(--vh, 1vh) * 100);
+            overflow: hidden;
+        }
+
+        #bg {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        #ui-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            height: calc(var(--vh, 1vh) * 100);
             pointer-events: none;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 20px;
+            padding: max(10px, var(--safe-top)) max(10px, var(--safe-right)) max(10px, var(--safe-bottom)) max(10px, var(--safe-left));
             box-sizing: border-box;
             z-index: 10;
         }
 
+        /* ===== TOP STATS BAR ===== */
         #stats {
             display: flex;
             justify-content: center;
+            align-items: center;
+            gap: clamp(10px, 3vw, 20px);
             pointer-events: auto;
+            flex-wrap: wrap;
         }
 
         #elixir-container {
-            width: 300px;
-            height: 25px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 12.5px;
+            width: clamp(150px, 40vw, 300px);
+            height: clamp(20px, 4vh, 30px);
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
             overflow: hidden;
             position: relative;
             border: 2px solid var(--glass-border);
             backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
         }
 
         #elixir-bar {
@@ -69,6 +122,7 @@
             width: 50%;
             background: linear-gradient(90deg, #9b59b6, #8e44ad);
             transition: width 0.1s linear;
+            border-radius: 15px;
         }
 
         #elixir-text {
@@ -78,115 +132,194 @@
             transform: translate(-50%, -50%);
             color: white;
             font-weight: bold;
-            font-size: 14px;
+            font-size: clamp(11px, 2.5vw, 16px);
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
         }
 
+        /* Elixir drop icon */
+        #elixir-icon {
+            font-size: clamp(18px, 4vw, 28px);
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+
+        /* ===== TIMER ===== */
+        #timer-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: clamp(5px, 1.5vw, 10px) clamp(10px, 3vw, 20px);
+            border-radius: 20px;
+            border: 2px solid var(--glass-border);
+        }
+
+        #timer-text {
+            color: white;
+            font-weight: bold;
+            font-size: clamp(14px, 3vw, 20px);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ===== CARDS CONTAINER ===== */
         #cards-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
-            justify-content: center;
+            gap: clamp(8px, 2vh, 15px);
+            justify-content: flex-end;
             pointer-events: auto;
-            margin-bottom: 20px;
+            padding-bottom: max(10px, var(--safe-bottom));
         }
 
         .cards-row {
             display: flex;
-            gap: 15px;
+            gap: clamp(8px, 2vw, 15px);
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
         #instruction {
             color: var(--primary-gold);
-            font-size: 14px;
+            font-size: clamp(10px, 2.5vw, 14px);
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
+            letter-spacing: clamp(0.5px, 0.2vw, 1px);
+            margin-bottom: clamp(3px, 1vh, 8px);
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            padding: 0 10px;
         }
 
+        /* ===== CARD STYLES ===== */
         .card {
-            width: 100px;
-            height: 140px;
+            width: clamp(70px, 18vw, 100px);
+            height: clamp(95px, 25vw, 140px);
             background: var(--glass-bg);
             border: 2px solid var(--glass-border);
-            border-radius: 12px;
+            border-radius: clamp(8px, 2vw, 12px);
             backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             cursor: grab;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
             position: relative;
-            user-select: none;
+            touch-action: none;
         }
 
         .card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
             border-color: var(--primary-gold);
         }
 
-        .card:active {
+        .card:active, .card.active {
             cursor: grabbing;
-            transform: scale(0.95) translateY(-10px);
+            transform: scale(0.95);
+            border-color: var(--primary-gold);
+            box-shadow: 0 0 20px rgba(241, 196, 15, 0.5);
         }
 
         .card.disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed;
             filter: grayscale(1);
+            pointer-events: none;
+        }
+
+        .card.selected {
+            border-color: var(--primary-gold);
+            box-shadow: 0 0 25px rgba(241, 196, 15, 0.6);
+            transform: translateY(-8px) scale(1.05);
         }
 
         .card-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
+            font-size: clamp(28px, 8vw, 48px);
+            margin-bottom: clamp(5px, 1.5vh, 10px);
         }
 
         .card-info {
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 2px;
         }
 
         .card-name {
             color: white;
-            font-size: 14px;
+            font-size: clamp(10px, 2.5vw, 14px);
             font-weight: 600;
+            text-align: center;
         }
 
         .card-cost {
             position: absolute;
-            top: -10px;
-            right: -10px;
-            background: #9b59b6;
+            top: clamp(-8px, -2vw, -10px);
+            right: clamp(-8px, -2vw, -10px);
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
             color: white;
-            width: 24px;
-            height: 24px;
+            width: clamp(20px, 5vw, 28px);
+            height: clamp(20px, 5vw, 28px);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: clamp(10px, 2.5vw, 14px);
             font-weight: bold;
             border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
 
+        /* ===== NEXT CARD ===== */
+        #next-card-container {
+            display: flex;
+            align-items: center;
+            gap: clamp(5px, 1.5vw, 10px);
+            margin-top: clamp(5px, 1.5vh, 10px);
+        }
+
+        #next-card-label {
+            color: #888;
+            font-size: clamp(9px, 2vw, 12px);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .next-card {
+            width: clamp(40px, 10vw, 55px);
+            height: clamp(55px, 14vw, 75px);
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: clamp(5px, 1.5vw, 8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+        }
+
+        .next-card .card-icon {
+            font-size: clamp(20px, 5vw, 28px);
+            margin: 0;
+        }
+
+        /* ===== GAME OVER MODAL ===== */
         #game-over {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            height: calc(var(--vh, 1vh) * 100);
+            background: rgba(0, 0, 0, 0.85);
             display: flex;
             align-items: center;
             justify-content: center;
             pointer-events: auto;
             z-index: 100;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         #game-over.hidden {
@@ -194,159 +327,541 @@
         }
 
         .modal {
-            background: #2c3e50;
-            padding: 40px;
-            border-radius: 20px;
+            background: linear-gradient(135deg, #2c3e50, #1a252f);
+            padding: clamp(25px, 6vw, 50px);
+            border-radius: clamp(15px, 4vw, 25px);
             text-align: center;
             border: 4px solid var(--primary-gold);
             color: white;
+            max-width: 90vw;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
         }
 
         .modal h1 {
-            font-size: 48px;
-            margin-bottom: 20px;
+            font-size: clamp(28px, 8vw, 56px);
+            margin-bottom: clamp(15px, 4vw, 25px);
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .modal p {
+            font-size: clamp(12px, 3vw, 18px);
+            color: #bbb;
+            margin-bottom: clamp(15px, 4vw, 25px);
         }
 
         .modal button {
-            padding: 12px 30px;
-            font-size: 18px;
-            background: var(--primary-gold);
+            padding: clamp(10px, 3vw, 15px) clamp(25px, 7vw, 40px);
+            font-size: clamp(14px, 3.5vw, 20px);
+            background: linear-gradient(135deg, var(--primary-gold), #d4ac0d);
             border: none;
-            border-radius: 8px;
+            border-radius: clamp(8px, 2vw, 12px);
             color: #2c3e50;
             font-weight: bold;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
+            touch-action: manipulation;
+            min-height: 44px;
+            box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);
         }
 
-        .modal button:hover {
-            transform: scale(1.1);
+        .modal button:hover, .modal button:active {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(241, 196, 15, 0.5);
+        }
+
+        /* ===== GHOST CARD (DRAG PREVIEW) ===== */
+        #ghost-card {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        #ghost-card.visible {
+            opacity: 0.8;
+        }
+
+        #ghost-card .card {
+            transform: scale(0.9);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* ===== SPAWN INDICATOR ===== */
+        #spawn-indicator {
+            position: fixed;
+            width: clamp(50px, 12vw, 80px);
+            height: clamp(50px, 12vw, 80px);
+            border: 3px dashed var(--primary-gold);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.15s;
+            transform: translate(-50%, -50%);
+        }
+
+        #spawn-indicator.visible {
+            opacity: 1;
+            animation: pulse 0.8s infinite;
+        }
+
+        #spawn-indicator.invalid {
+            border-color: var(--primary-red);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        /* ===== TOWER HP INDICATORS ===== */
+        .tower-hp-ui {
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        .tower-hp-bar {
+            width: clamp(40px, 10vw, 60px);
+            height: clamp(6px, 1.5vw, 10px);
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .tower-hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            transition: width 0.3s;
+        }
+
+        .tower-hp-fill.enemy {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+
+        /* ===== DAMAGE NUMBERS ===== */
+        .damage-number {
+            position: fixed;
+            color: #ff6b6b;
+            font-size: clamp(14px, 3.5vw, 20px);
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
+            z-index: 200;
+            animation: damageFloat 1s forwards;
+        }
+
+        @keyframes damageFloat {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-30px) scale(0.8); }
+        }
+
+        /* ===== RESPONSIVE BREAKPOINTS ===== */
+        
+        /* Landscape phones */
+        @media (max-height: 500px) and (orientation: landscape) {
+            #ui-layer {
+                padding: 5px max(8px, var(--safe-right)) 5px max(8px, var(--safe-left));
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: flex-end;
+            }
+
+            #stats {
+                position: absolute;
+                top: 5px;
+                left: 50%;
+                transform: translateX(-50%);
+                flex-direction: row;
+            }
+
+            #elixir-container {
+                width: clamp(120px, 25vw, 200px);
+                height: clamp(16px, 3vh, 22px);
+            }
+
+            #timer-container {
+                padding: 4px 10px;
+            }
+
+            #cards-container {
+                position: absolute;
+                bottom: 5px;
+                right: max(10px, var(--safe-right));
+                flex-direction: row;
+                align-items: flex-end;
+                gap: 8px;
+            }
+
+            .cards-row {
+                gap: clamp(5px, 1.5vw, 10px);
+            }
+
+            .card {
+                width: clamp(55px, 12vw, 75px);
+                height: clamp(75px, 16vw, 100px);
+            }
+
+            .card-icon {
+                font-size: clamp(22px, 5vw, 32px);
+            }
+
+            .card-name {
+                font-size: clamp(8px, 1.8vw, 11px);
+            }
+
+            .card-cost {
+                width: clamp(16px, 4vw, 22px);
+                height: clamp(16px, 4vw, 22px);
+                font-size: clamp(9px, 2vw, 12px);
+            }
+
+            #instruction {
+                display: none;
+            }
+
+            #next-card-container {
+                display: none;
+            }
+        }
+
+        /* Portrait phones */
+        @media (max-width: 480px) and (orientation: portrait) {
+            .card {
+                width: clamp(65px, 20vw, 85px);
+                height: clamp(90px, 26vw, 115px);
+            }
+
+            .card-icon {
+                font-size: clamp(26px, 7vw, 36px);
+            }
+        }
+
+        /* Small phones */
+        @media (max-width: 360px) {
+            .card {
+                width: 60px;
+                height: 82px;
+            }
+
+            .card-icon {
+                font-size: 24px;
+            }
+
+            .card-name {
+                font-size: 9px;
+            }
+
+            #elixir-container {
+                width: 130px;
+            }
+        }
+
+        /* Tablets */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .card {
+                width: clamp(85px, 12vw, 100px);
+                height: clamp(115px, 16vw, 140px);
+            }
+
+            #elixir-container {
+                width: clamp(200px, 30vw, 280px);
+            }
+        }
+
+        /* Desktop hover effects (only for mouse devices) */
+        @media (hover: hover) and (pointer: fine) {
+            .card:hover {
+                transform: translateY(-10px);
+                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+            }
+        }
+
+        /* Touch devices - remove hover effects */
+        @media (hover: none) {
+            .card:hover {
+                transform: none;
+                box-shadow: none;
+            }
         }
 
         .dragging {
             opacity: 0.3;
+        }
+
+        /* ===== HAPTIC FEEDBACK VISUAL ===== */
+        .haptic-flash {
+            animation: hapticFlash 0.1s;
+        }
+
+        @keyframes hapticFlash {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.3); }
         }
     </style>
 </head>
 
 <body>
     <div id="game-container">
+        <canvas id="bg"></canvas>
+
         <div id="ui-layer">
             <div id="stats">
+                <span id="elixir-icon">💧</span>
                 <div id="elixir-container">
                     <div id="elixir-bar"></div>
-                    <span id="elixir-text">5</span>
+                    <span id="elixir-text">5/10</span>
+                </div>
+                <div id="timer-container">
+                    <span id="timer-text">3:00</span>
                 </div>
             </div>
 
             <div id="cards-container">
-                <div id="instruction">Drag cards to the field to spawn units</div>
-                <div class="cards-row">
-                    <div class="card" id="card-knight" draggable="true" data-type="knight" data-cost="3">
+                <div id="instruction">Tap a card, then tap the field to deploy</div>
+                <div class="cards-row" id="main-cards">
+                    <div class="card" id="card-knight" data-type="knight" data-cost="3">
                         <div class="card-icon">⚔️</div>
                         <div class="card-info">
                             <span class="card-name">Knight</span>
-                            <span class="card-cost">3</span>
                         </div>
+                        <span class="card-cost">3</span>
                     </div>
-                    <div class="card" id="card-archer" draggable="true" data-type="archer" data-cost="2">
+                    <div class="card" id="card-archer" data-type="archer" data-cost="2">
                         <div class="card-icon">🏹</div>
                         <div class="card-info">
                             <span class="card-name">Archer</span>
-                            <span class="card-cost">2</span>
                         </div>
+                        <span class="card-cost">2</span>
                     </div>
-                    <div class="card" id="card-giant" draggable="true" data-type="giant" data-cost="5">
+                    <div class="card" id="card-giant" data-type="giant" data-cost="5">
                         <div class="card-icon">👑</div>
                         <div class="card-info">
                             <span class="card-name">Giant</span>
-                            <span class="card-cost">5</span>
                         </div>
+                        <span class="card-cost">5</span>
+                    </div>
+                    <div class="card" id="card-wizard" data-type="wizard" data-cost="4">
+                        <div class="card-icon">🔥</div>
+                        <div class="card-info">
+                            <span class="card-name">Wizard</span>
+                        </div>
+                        <span class="card-cost">4</span>
+                    </div>
+                </div>
+                <div id="next-card-container">
+                    <span id="next-card-label">Next:</span>
+                    <div class="next-card" id="next-card">
+                        <div class="card-icon">⚔️</div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div id="game-over" class="hidden">
-                <div class="modal">
-                    <h1 id="result-title">Victory!</h1>
-                    <button onclick="location.reload()">Play Again</button>
-                </div>
+        <!-- Ghost card for drag preview -->
+        <div id="ghost-card"></div>
+
+        <!-- Spawn indicator -->
+        <div id="spawn-indicator"></div>
+
+        <!-- Game over modal -->
+        <div id="game-over" class="hidden">
+            <div class="modal">
+                <h1 id="result-title">Victory!</h1>
+                <p id="result-stats">Towers destroyed: 0 | Units deployed: 0</p>
+                <button id="play-again-btn">Play Again</button>
             </div>
         </div>
-        <canvas id="bg"></canvas>
     </div>
 
     <script type="module">
         import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
-        // Mocking Cannon-es as we might not need it for this simple prototype physics
-        // or we can load it from a script tag if necessary. 
-        // For now, let's use a simpler movement logic without a heavy engine.
+        // --- DEVICE DETECTION ---
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        const isMobile = isIOS || isAndroid ||
+            ('ontouchstart' in window && navigator.maxTouchPoints > 1) ||
+            (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
+
+        // --- VIEWPORT HEIGHT FIX ---
+        function setVH() {
+            const vh = window.visualViewport 
+                ? window.visualViewport.height * 0.01 
+                : window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        }
+        setVH();
+        window.addEventListener('resize', setVH);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(setVH, 100);
+            setTimeout(setVH, 300);
+        });
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', setVH);
+        }
+
+        // Prevent pull-to-refresh
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1) {
+                e.preventDefault();
+            }
+        }, { passive: false });
 
         // --- CONFIGURATION ---
         const CONFIG = {
             ELIXIR_MAX: 10,
-            ELIXIR_GROWTH_RATE: 0.5, // Faster elixir (0.5 units per second)
+            ELIXIR_GROWTH_RATE: 0.5,
+            GAME_DURATION: 180, // 3 minutes
             AI_SPAWN_INTERVAL: [5000, 8000],
             UNIT_TYPES: {
-                knight: { hp: 120, maxHp: 120, dmg: 18, range: 1.5, speed: 2, cost: 3, color: 0x3498db },
-                archer: { hp: 80, maxHp: 80, dmg: 12, range: 7, speed: 1.8, cost: 2, color: 0xe67e22 },
-                giant: { hp: 350, maxHp: 350, dmg: 30, range: 2, speed: 1.2, cost: 5, color: 0x27ae60, buildingOnly: true }
+                knight: { hp: 120, maxHp: 120, dmg: 18, range: 1.5, speed: 2, cost: 3, color: 0x3498db, icon: '⚔️' },
+                archer: { hp: 80, maxHp: 80, dmg: 12, range: 7, speed: 1.8, cost: 2, color: 0xe67e22, icon: '🏹' },
+                giant: { hp: 350, maxHp: 350, dmg: 30, range: 2, speed: 1.2, cost: 5, color: 0x27ae60, icon: '👑', buildingOnly: true },
+                wizard: { hp: 90, maxHp: 90, dmg: 25, range: 6, speed: 1.5, cost: 4, color: 0xe74c3c, icon: '🔥', splash: true }
             }
         };
 
-        // --- AUDIO SYSTEM ---
+        // --- AUDIO & HAPTIC SYSTEM ---
         const AudioFX = {
             ctx: null,
+            enabled: false,
+
             init() {
+                if (this.ctx) return;
                 this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.enabled = true;
             },
+
+            vibrate(pattern = 10) {
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(pattern);
+                }
+            },
+
             play(type) {
-                if (!this.ctx) return;
+                if (!this.ctx || !this.enabled) return;
+
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
 
                 const now = this.ctx.currentTime;
-                if (type === 'attack') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(400, now);
-                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
-                    gain.gain.setValueAtTime(0.1, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-                    osc.start();
-                    osc.stop(now + 0.15);
-                } else if (type === 'archer') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(800, now);
-                    osc.frequency.exponentialRampToValueAtTime(1200, now + 0.05);
-                    gain.gain.setValueAtTime(0.1, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-                    osc.start();
-                    osc.stop(now + 0.1);
-                } else if (type === 'tower') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(150, now);
-                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
-                    gain.gain.setValueAtTime(0.2, now);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                    osc.start();
-                    osc.stop(now + 0.3);
-                } else if (type === 'spawn') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(300, now);
-                    osc.frequency.exponentialRampToValueAtTime(600, now + 0.2);
-                    gain.gain.setValueAtTime(0.1, now);
-                    gain.gain.linearRampToValueAtTime(0, now + 0.2);
-                    osc.start();
-                    osc.stop(now + 0.2);
+
+                switch(type) {
+                    case 'attack':
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(400, now);
+                        osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+                        gain.gain.setValueAtTime(0.08, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                        osc.start(); osc.stop(now + 0.15);
+                        this.vibrate(15);
+                        break;
+
+                    case 'archer':
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(800, now);
+                        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.05);
+                        gain.gain.setValueAtTime(0.08, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                        osc.start(); osc.stop(now + 0.1);
+                        this.vibrate(8);
+                        break;
+
+                    case 'wizard':
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(200, now);
+                        osc.frequency.exponentialRampToValueAtTime(600, now + 0.2);
+                        gain.gain.setValueAtTime(0.1, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                        osc.start(); osc.stop(now + 0.25);
+                        this.vibrate([10, 20, 10]);
+                        break;
+
+                    case 'tower':
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(150, now);
+                        osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+                        gain.gain.setValueAtTime(0.15, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                        osc.start(); osc.stop(now + 0.3);
+                        this.vibrate(20);
+                        break;
+
+                    case 'spawn':
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(300, now);
+                        osc.frequency.exponentialRampToValueAtTime(600, now + 0.15);
+                        gain.gain.setValueAtTime(0.08, now);
+                        gain.gain.linearRampToValueAtTime(0, now + 0.15);
+                        osc.start(); osc.stop(now + 0.15);
+                        this.vibrate(25);
+                        break;
+
+                    case 'select':
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(500, now);
+                        gain.gain.setValueAtTime(0.05, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                        osc.start(); osc.stop(now + 0.08);
+                        this.vibrate(10);
+                        break;
+
+                    case 'error':
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(150, now);
+                        gain.gain.setValueAtTime(0.1, now);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                        osc.start(); osc.stop(now + 0.2);
+                        this.vibrate([30, 50, 30]);
+                        break;
+
+                    case 'victory':
+                        this.playMelody([523, 659, 784, 1047], 0.15);
+                        this.vibrate([50, 30, 50, 30, 100]);
+                        break;
+
+                    case 'defeat':
+                        this.playMelody([400, 350, 300, 250], 0.2);
+                        this.vibrate([100, 50, 100]);
+                        break;
                 }
+            },
+
+            playMelody(frequencies, duration) {
+                frequencies.forEach((freq, i) => {
+                    setTimeout(() => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.type = 'sine';
+                        osc.frequency.value = freq;
+                        gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                        osc.start();
+                        osc.stop(this.ctx.currentTime + duration);
+                    }, i * duration * 1000);
+                });
             }
         };
 
-        // Initialize audio on first click
-        window.addEventListener('mousedown', () => AudioFX.init(), { once: true });
+        // Initialize audio on first interaction
+        const initAudio = () => {
+            AudioFX.init();
+            window.removeEventListener('touchstart', initAudio);
+            window.removeEventListener('mousedown', initAudio);
+        };
+        window.addEventListener('touchstart', initAudio, { once: true });
+        window.addEventListener('mousedown', initAudio, { once: true });
 
         // --- GAME STATE ---
         const state = {
@@ -356,7 +871,13 @@
             aiUnits: [],
             towers: [],
             isGameOver: false,
-            aiSpawnTimer: 0
+            aiSpawnTimer: 0,
+            gameTime: CONFIG.GAME_DURATION,
+            selectedCard: null,
+            unitsDeployed: 0,
+            towersDestroyed: 0,
+            deck: ['knight', 'archer', 'giant', 'wizard'],
+            nextCard: 'knight'
         };
 
         // --- SCENE SETUP ---
@@ -369,10 +890,19 @@
         camera.position.set(25, 25, 25);
         camera.lookAt(0, 0, 0);
 
-        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg'), antialias: true });
+        const pixelRatio = isMobile ? Math.min(window.devicePixelRatio, 2) : window.devicePixelRatio;
+        const renderer = new THREE.WebGLRenderer({ 
+            canvas: document.getElementById('bg'), 
+            antialias: !isMobile,
+            powerPreference: isMobile ? 'high-performance' : 'default',
+            alpha: false
+        });
+        renderer.setPixelRatio(pixelRatio);
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.shadowMap.enabled = !isMobile || pixelRatio <= 2;
+        if (renderer.shadowMap.enabled) {
+            renderer.shadowMap.type = isMobile ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
+        }
 
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         scene.add(ambientLight);
@@ -492,7 +1022,7 @@
                 const body = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.4, 1.0), mat);
                 body.position.y = 0.7;
                 group.add(body);
-                // Big Arm
+                // Big Arms
                 const armRight = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.0, 0.4), mat);
                 armRight.position.set(0.8, 0.7, 0);
                 group.add(armRight);
@@ -503,6 +1033,31 @@
                 const head = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
                 head.position.y = 1.6;
                 group.add(head);
+            } else if (type === 'wizard') {
+                // Robe body
+                const body = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.2, 8), mat);
+                body.position.y = 0.6;
+                group.add(body);
+                // Head
+                const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 8, 8), new THREE.MeshStandardMaterial({ color: 0xffdbac }));
+                head.position.y = 1.35;
+                group.add(head);
+                // Wizard hat
+                const hat = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.6, 8), new THREE.MeshStandardMaterial({ color: 0x2c3e50 }));
+                hat.position.y = 1.75;
+                group.add(hat);
+                // Staff
+                const staff = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.4), new THREE.MeshStandardMaterial({ color: 0x795548 }));
+                staff.position.set(0.4, 0.7, 0);
+                group.add(staff);
+                // Staff orb
+                const orb = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), new THREE.MeshStandardMaterial({ 
+                    color: 0xff6b35, 
+                    emissive: 0xff6b35, 
+                    emissiveIntensity: 0.5 
+                }));
+                orb.position.set(0.4, 1.45, 0);
+                group.add(orb);
             }
             return group;
         }
@@ -592,21 +1147,40 @@
                     if (dist <= this.config.range) {
                         this.attackTimer += dt;
                         if (this.attackTimer >= 1000) {
-                            this.target.hp -= this.config.dmg;
+                            // Splash damage for wizard
+                            if (this.config.splash) {
+                                const splashRadius = 2.5;
+                                const enemies = this.side === 'player' ? state.aiUnits : state.playerUnits;
+                                enemies.forEach(e => {
+                                    const d = this.target.pos ? this.target.pos.distanceTo(e.pos) : 999;
+                                    if (d < splashRadius) {
+                                        e.hp -= this.config.dmg * (1 - d / splashRadius);
+                                        this.showHitEffect(e.mesh);
+                                    }
+                                });
+                                // Also damage the main target
+                                this.target.hp -= this.config.dmg;
+                                this.showSplashEffect(this.target.pos || this.target.position);
+                            } else {
+                                this.target.hp -= this.config.dmg;
+                            }
+                            
                             this.attackTimer = 0;
 
                             // Audio based on unit
-                            AudioFX.play(this.type === 'archer' ? 'archer' : 'attack');
+                            if (this.type === 'wizard') {
+                                AudioFX.play('wizard');
+                            } else if (this.type === 'archer') {
+                                AudioFX.play('archer');
+                            } else {
+                                AudioFX.play('attack');
+                            }
 
                             // Hit flash
-                            const targetMesh = this.target.mesh || this.target.mesh; // tower or unit
-                            targetMesh.traverse(child => {
-                                if (child.isMesh && child.material) {
-                                    const oldCol = child.material.color.clone();
-                                    child.material.color.set(0xffffff);
-                                    setTimeout(() => { if (child.material) child.material.color.copy(oldCol); }, 100);
-                                }
-                            });
+                            this.showHitEffect(this.target.mesh);
+                            
+                            // Show damage number
+                            this.showDamageNumber(this.target.pos || this.target.position, this.config.dmg);
                         }
                     } else {
                         const dir = new THREE.Vector3().subVectors(targetPos, this.pos).normalize();
@@ -638,44 +1212,300 @@
                 this.target = closest;
             }
 
+            showHitEffect(mesh) {
+                if (!mesh) return;
+                mesh.traverse(child => {
+                    if (child.isMesh && child.material) {
+                        const oldCol = child.material.color.clone();
+                        child.material.color.set(0xffffff);
+                        setTimeout(() => { 
+                            if (child.material) child.material.color.copy(oldCol); 
+                        }, 100);
+                    }
+                });
+            }
+
+            showSplashEffect(pos) {
+                const geo = new THREE.RingGeometry(0.3, 2, 16);
+                const mat = new THREE.MeshBasicMaterial({ 
+                    color: 0xff6b35, 
+                    transparent: true, 
+                    opacity: 0.7,
+                    side: THREE.DoubleSide
+                });
+                const ring = new THREE.Mesh(geo, mat);
+                ring.rotation.x = -Math.PI / 2;
+                ring.position.set(pos.x, 0.2, pos.z);
+                scene.add(ring);
+                
+                let scale = 1;
+                const animateSplash = () => {
+                    scale += 0.15;
+                    ring.scale.set(scale, scale, scale);
+                    ring.material.opacity -= 0.08;
+                    if (ring.material.opacity > 0) {
+                        requestAnimationFrame(animateSplash);
+                    } else {
+                        scene.remove(ring);
+                        ring.geometry.dispose();
+                        ring.material.dispose();
+                    }
+                };
+                animateSplash();
+            }
+
+            showDamageNumber(pos, damage) {
+                const div = document.createElement('div');
+                div.className = 'damage-number';
+                div.textContent = '-' + Math.round(damage);
+                
+                // Convert 3D position to screen position
+                const vector = new THREE.Vector3(pos.x, pos.y + 2, pos.z);
+                vector.project(camera);
+                
+                const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+                const y = (-(vector.y * 0.5) + 0.5) * window.innerHeight;
+                
+                div.style.left = x + 'px';
+                div.style.top = y + 'px';
+                document.body.appendChild(div);
+                
+                setTimeout(() => div.remove(), 1000);
+            }
+
             destroy() {
                 scene.remove(this.mesh);
             }
         }
 
-        // --- INPUT HANDLING ---
+        // --- INPUT HANDLING (Touch + Mouse) ---
         const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        let activeDrag = null;
+        const pointer = new THREE.Vector2();
+        const ghostCard = document.getElementById('ghost-card');
+        const spawnIndicator = document.getElementById('spawn-indicator');
 
-        document.querySelectorAll('.card').forEach(card => {
-            card.addEventListener('dragstart', (e) => {
-                const cost = parseInt(card.dataset.cost);
-                if (state.elixir < cost) { e.preventDefault(); return; }
-                activeDrag = card.dataset.type;
-                card.classList.add('dragging');
+        // Card selection
+        function selectCard(cardElement) {
+            if (state.isGameOver) return;
+            
+            const type = cardElement.dataset.type;
+            const cost = parseInt(cardElement.dataset.cost);
+            
+            if (state.elixir < cost) {
+                AudioFX.play('error');
+                cardElement.classList.add('haptic-flash');
+                setTimeout(() => cardElement.classList.remove('haptic-flash'), 100);
+                return;
+            }
+            
+            // Deselect previous
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+            
+            // Select new
+            state.selectedCard = type;
+            cardElement.classList.add('selected');
+            AudioFX.play('select');
+            
+            // Update instruction
+            document.getElementById('instruction').textContent = 'Tap the field to deploy ' + type.toUpperCase();
+        }
+
+        // Deselect card
+        function deselectCard() {
+            state.selectedCard = null;
+            document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+            spawnIndicator.classList.remove('visible');
+            document.getElementById('instruction').textContent = 'Tap a card, then tap the field to deploy';
+        }
+
+        // Get world position from screen coordinates
+        function getWorldPosition(clientX, clientY) {
+            pointer.x = (clientX / window.innerWidth) * 2 - 1;
+            pointer.y = -(clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(pointer, camera);
+            
+            const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+            const target = new THREE.Vector3();
+            raycaster.ray.intersectPlane(plane, target);
+            return target;
+        }
+
+        // Check if position is valid for spawning
+        function isValidSpawnPosition(point) {
+            return point && point.z > 0 && point.z < 15 && Math.abs(point.x) < 11;
+        }
+
+        // Spawn unit at position
+        function spawnUnit(type, x, z) {
+            const cost = CONFIG.UNIT_TYPES[type].cost;
+            if (state.elixir < cost) return false;
+            
+            const unit = new Unit(type, x, z, 'player');
+            state.playerUnits.push(unit);
+            state.elixir -= cost;
+            state.unitsDeployed++;
+            
+            // Show spawn effect
+            showSpawnEffect(x, z);
+            
+            return true;
+        }
+
+        // Show spawn effect
+        function showSpawnEffect(x, z) {
+            const geo = new THREE.RingGeometry(0.5, 1.5, 16);
+            const mat = new THREE.MeshBasicMaterial({ 
+                color: 0xf1c40f, 
+                transparent: true, 
+                opacity: 0.8,
+                side: THREE.DoubleSide
             });
-            card.addEventListener('dragend', () => {
-                card.classList.remove('dragging');
-                activeDrag = null;
+            const ring = new THREE.Mesh(geo, mat);
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.set(x, 0.1, z);
+            scene.add(ring);
+            
+            let scale = 1;
+            const animate = () => {
+                scale += 0.1;
+                ring.scale.set(scale, scale, scale);
+                ring.material.opacity -= 0.05;
+                if (ring.material.opacity > 0) {
+                    requestAnimationFrame(animate);
+                } else {
+                    scene.remove(ring);
+                    ring.geometry.dispose();
+                    ring.material.dispose();
+                }
+            };
+            animate();
+        }
+
+        // Card click/tap handlers
+        document.querySelectorAll('.card').forEach(card => {
+            // Remove draggable attribute for mobile
+            card.removeAttribute('draggable');
+            
+            // Touch events
+            card.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                selectCard(card);
+            }, { passive: false });
+            
+            // Mouse events
+            card.addEventListener('click', (e) => {
+                e.preventDefault();
+                selectCard(card);
             });
         });
 
-        window.addEventListener('dragover', (e) => e.preventDefault());
-        window.addEventListener('drop', (e) => {
-            if (!activeDrag) return;
-            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(scene.children);
-            if (intersects.length > 0) {
-                const point = intersects[0].point;
-                if (point.z > 0 && point.z < 15 && Math.abs(point.x) < 11) {
-                    const unit = new Unit(activeDrag, point.x, point.z, 'player');
-                    state.playerUnits.push(unit);
-                    state.elixir -= CONFIG.UNIT_TYPES[activeDrag].cost;
+        // Canvas/field interaction
+        const canvas = document.getElementById('bg');
+
+        // Touch events for spawning
+        canvas.addEventListener('touchstart', (e) => {
+            if (!state.selectedCard || state.isGameOver) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            const point = getWorldPosition(touch.clientX, touch.clientY);
+            
+            if (isValidSpawnPosition(point)) {
+                if (spawnUnit(state.selectedCard, point.x, point.z)) {
+                    deselectCard();
+                }
+            } else {
+                AudioFX.play('error');
+                spawnIndicator.classList.add('invalid');
+                setTimeout(() => spawnIndicator.classList.remove('invalid'), 200);
+            }
+        }, { passive: false });
+
+        // Touch move for spawn indicator
+        canvas.addEventListener('touchmove', (e) => {
+            if (!state.selectedCard) return;
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            const point = getWorldPosition(touch.clientX, touch.clientY);
+            
+            if (point) {
+                spawnIndicator.style.left = touch.clientX + 'px';
+                spawnIndicator.style.top = touch.clientY + 'px';
+                spawnIndicator.classList.add('visible');
+                
+                if (isValidSpawnPosition(point)) {
+                    spawnIndicator.classList.remove('invalid');
+                } else {
+                    spawnIndicator.classList.add('invalid');
                 }
             }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', () => {
+            spawnIndicator.classList.remove('visible');
+        });
+
+        // Mouse events for spawning (PC)
+        canvas.addEventListener('click', (e) => {
+            if (!state.selectedCard || state.isGameOver) return;
+            
+            const point = getWorldPosition(e.clientX, e.clientY);
+            
+            if (isValidSpawnPosition(point)) {
+                if (spawnUnit(state.selectedCard, point.x, point.z)) {
+                    deselectCard();
+                }
+            } else {
+                AudioFX.play('error');
+            }
+        });
+
+        // Mouse move for spawn indicator (PC)
+        canvas.addEventListener('mousemove', (e) => {
+            if (!state.selectedCard) {
+                spawnIndicator.classList.remove('visible');
+                return;
+            }
+            
+            const point = getWorldPosition(e.clientX, e.clientY);
+            
+            spawnIndicator.style.left = e.clientX + 'px';
+            spawnIndicator.style.top = e.clientY + 'px';
+            spawnIndicator.classList.add('visible');
+            
+            if (isValidSpawnPosition(point)) {
+                spawnIndicator.classList.remove('invalid');
+            } else {
+                spawnIndicator.classList.add('invalid');
+            }
+        });
+
+        // Right click / escape to deselect
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            deselectCard();
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                deselectCard();
+            }
+            // Number keys to select cards
+            if (e.key >= '1' && e.key <= '4') {
+                const cardIndex = parseInt(e.key) - 1;
+                const cards = document.querySelectorAll('#main-cards .card');
+                if (cards[cardIndex]) {
+                    selectCard(cards[cardIndex]);
+                }
+            }
+        });
+
+        // Play Again button
+        document.getElementById('play-again-btn').addEventListener('click', () => location.reload());
+        document.getElementById('play-again-btn').addEventListener('touchend', (e) => {
+            e.preventDefault();
+            location.reload();
         });
 
         // --- GAME LOOP ---
@@ -687,7 +1517,18 @@
             const dt = now - state.lastTime;
             state.lastTime = now;
 
-            // Updated Elixir logic
+            // Game timer
+            state.gameTime -= dt / 1000;
+            if (state.gameTime <= 0) {
+                state.gameTime = 0;
+                // Time's up - check who has more tower HP
+                const playerHP = state.towers.filter(t => t.side === 'player').reduce((sum, t) => sum + t.hp, 0);
+                const aiHP = state.towers.filter(t => t.side === 'ai').reduce((sum, t) => sum + t.hp, 0);
+                endGame(playerHP > aiHP ? 'Victory!' : (playerHP < aiHP ? 'Defeat' : 'Draw!'));
+                return;
+            }
+
+            // Elixir regeneration
             state.elixir = Math.min(CONFIG.ELIXIR_MAX, state.elixir + (CONFIG.ELIXIR_GROWTH_RATE * dt / 1000));
             updateUI();
 
@@ -730,7 +1571,15 @@
 
                 if (t.hp <= 0) {
                     scene.remove(t.mesh);
-                    if (t.isKing) endGame(t.side === 'ai' ? 'Victory!' : 'Defeat');
+                    
+                    // Track destroyed towers
+                    if (t.side === 'ai') {
+                        state.towersDestroyed++;
+                    }
+                    
+                    if (t.isKing) {
+                        endGame(t.side === 'ai' ? 'Victory!' : 'Defeat');
+                    }
                     state.towers.splice(i, 1);
                 }
             }
@@ -739,28 +1588,81 @@
         }
 
         function updateUI() {
-            document.getElementById('elixir-bar').style.width = (state.elixir / CONFIG.ELIXIR_MAX * 100) + '%';
-            document.getElementById('elixir-text').innerText = Math.floor(state.elixir);
+            // Elixir bar
+            const elixirPercent = (state.elixir / CONFIG.ELIXIR_MAX * 100);
+            document.getElementById('elixir-bar').style.width = elixirPercent + '%';
+            document.getElementById('elixir-text').innerText = Math.floor(state.elixir) + '/' + CONFIG.ELIXIR_MAX;
+            
+            // Timer
+            const mins = Math.floor(state.gameTime / 60);
+            const secs = Math.floor(state.gameTime % 60);
+            document.getElementById('timer-text').innerText = mins + ':' + secs.toString().padStart(2, '0');
+            
+            // Cards availability
             document.querySelectorAll('.card').forEach(card => {
                 const cost = parseInt(card.dataset.cost);
-                if (state.elixir < cost) card.classList.add('disabled');
-                else card.classList.remove('disabled');
+                if (state.elixir < cost) {
+                    card.classList.add('disabled');
+                } else {
+                    card.classList.remove('disabled');
+                }
             });
+            
+            // Next card
+            document.querySelector('#next-card .card-icon').textContent = CONFIG.UNIT_TYPES[state.nextCard].icon;
         }
 
         function endGame(result) {
             state.isGameOver = true;
+            
+            const isVictory = result === 'Victory!';
             document.getElementById('result-title').innerText = result;
+            document.getElementById('result-stats').innerText = 
+                `Towers destroyed: ${state.towersDestroyed} | Units deployed: ${state.unitsDeployed}`;
             document.getElementById('game-over').classList.remove('hidden');
+            
+            // Play sound
+            AudioFX.play(isVictory ? 'victory' : 'defeat');
+            
+            // Deselect any selected card
+            deselectCard();
         }
 
-        window.addEventListener('resize', () => {
-            const aspect = window.innerWidth / window.innerHeight;
-            camera.left = -d * aspect;
-            camera.right = d * aspect;
+        function handleResize() {
+            const w = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+            const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            const aspect = w / h;
+            
+            // Adjust camera for different aspect ratios
+            let cameraD = d;
+            if (aspect < 1) {
+                // Portrait - zoom out more
+                cameraD = d * 1.3;
+            } else if (aspect > 2) {
+                // Ultra-wide - zoom in
+                cameraD = d * 0.9;
+            }
+            
+            camera.left = -cameraD * aspect;
+            camera.right = cameraD * aspect;
+            camera.top = cameraD;
+            camera.bottom = -cameraD;
             camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setSize(w, h);
+            setVH();
+        }
+
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', () => {
+            setTimeout(handleResize, 100);
+            setTimeout(handleResize, 300);
         });
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', handleResize);
+        }
+
+        // Initial resize
+        handleResize();
 
         createField();
         animate();
