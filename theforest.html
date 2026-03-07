@@ -11,20 +11,27 @@
       overflow: hidden;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #000;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     #ui {
       position: absolute;
-      top: 20px;
-      left: 20px;
+      top: 10px;
+      left: 10px;
       color: white;
       text-shadow: 1px 1px 2px black;
       z-index: 100;
     }
 
     .bar-container {
-      margin-bottom: 15px;
-      width: 220px;
+      margin-bottom: 8px;
+      width: clamp(120px, 25vw, 220px);
     }
 
     .bar-label {
@@ -32,11 +39,12 @@
       justify-content: space-between;
       margin-bottom: 5px;
       font-weight: bold;
+      font-size: clamp(10px, 2.5vw, 14px);
     }
 
     .bar {
       width: 100%;
-      height: 20px;
+      height: clamp(12px, 3vw, 20px);
       background: rgba(0, 0, 0, 0.7);
       border-radius: 10px;
       overflow: hidden;
@@ -46,7 +54,7 @@
     .fill {
       height: 100%;
       border-radius: 10px;
-      transition: width 0.3s ease;
+      transition: width 0.2s ease;
     }
 
     #health {
@@ -61,16 +69,18 @@
 
     #inventory {
       position: absolute;
-      bottom: 20px;
-      right: 20px;
+      bottom: 10px;
+      right: 10px;
       background: rgba(0, 0, 0, 0.8);
-      padding: 15px;
+      padding: clamp(8px, 2vw, 15px);
       color: white;
       border-radius: 10px;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      min-width: 220px;
+      min-width: clamp(140px, 30vw, 220px);
+      max-width: 45vw;
       z-index: 100;
       backdrop-filter: blur(5px);
+      font-size: clamp(10px, 2.5vw, 14px);
     }
 
     #hunger-bar {
@@ -85,30 +95,33 @@
 
     #inventory h3 {
       margin-top: 0;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       color: #f1c40f;
       text-align: center;
+      font-size: clamp(12px, 3vw, 18px);
     }
 
     .inventory-item {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 8px;
-      padding-bottom: 5px;
+      margin-bottom: 5px;
+      padding-bottom: 3px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      gap: 5px;
     }
 
     #crosshair {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 8px;
-      height: 8px;
+      width: clamp(6px, 1.5vw, 8px);
+      height: clamp(6px, 1.5vw, 8px);
       background: rgba(255, 255, 255, 0.7);
       border-radius: 50%;
       transform: translate(-50%, -50%);
       z-index: 50;
       box-shadow: 0 0 5px black;
+      pointer-events: none;
     }
 
     #instructions {
@@ -123,10 +136,12 @@
       cursor: pointer;
       z-index: 200;
       transition: opacity 0.5s ease;
+      padding: 20px;
+      overflow-y: auto;
     }
 
     #instructions h1 {
-      font-size: 4rem;
+      font-size: clamp(2rem, 10vw, 4rem);
       margin-bottom: 10px;
       color: #4CAF50;
       text-shadow: 0 0 10px #4CAF50, 0 0 20px #4CAF50;
@@ -134,33 +149,39 @@
     }
 
     #instructions p {
-      font-size: 1.2rem;
+      font-size: clamp(0.8rem, 3vw, 1.2rem);
       margin: 8px;
       text-align: center;
-      max-width: 600px;
+      max-width: 90vw;
       line-height: 1.5;
+      padding: 0 10px;
     }
 
     #instructions .controls {
       background: rgba(0, 0, 0, 0.5);
-      padding: 20px;
+      padding: clamp(10px, 3vw, 20px);
       border-radius: 10px;
-      margin-top: 20px;
+      margin-top: 15px;
       border: 1px solid rgba(76, 175, 80, 0.3);
+      max-width: 90vw;
+      max-height: 40vh;
+      overflow-y: auto;
     }
 
     #instructions .controls div {
       margin: 5px 0;
+      font-size: clamp(0.7rem, 2.5vw, 1rem);
     }
 
     .key {
       display: inline-block;
       background: rgba(255, 255, 255, 0.1);
-      padding: 3px 8px;
+      padding: 2px 6px;
       border-radius: 5px;
       border: 1px solid rgba(255, 255, 255, 0.3);
-      margin: 0 5px;
+      margin: 0 3px;
       font-family: monospace;
+      font-size: clamp(0.6rem, 2vw, 0.9rem);
     }
 
     #message {
@@ -170,31 +191,32 @@
       transform: translate(-50%, -50%);
       background: rgba(0, 0, 0, 0.8);
       color: white;
-      padding: 15px 25px;
+      padding: clamp(10px, 3vw, 15px) clamp(15px, 4vw, 25px);
       border-radius: 10px;
-      font-size: 1.5rem;
+      font-size: clamp(0.9rem, 4vw, 1.5rem);
       display: none;
       z-index: 150;
       text-align: center;
       border: 2px solid #4CAF50;
       box-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
+      max-width: 90vw;
     }
 
     #dayCounter {
       position: absolute;
-      top: 20px;
-      right: 20px;
+      top: 10px;
+      right: 10px;
       color: white;
-      font-size: 1.2rem;
+      font-size: clamp(10px, 2.5vw, 1.2rem);
       background: rgba(0, 0, 0, 0.5);
-      padding: 10px 15px;
+      padding: clamp(5px, 1.5vw, 10px) clamp(8px, 2vw, 15px);
       border-radius: 5px;
       z-index: 100;
     }
 
     #timeIndicator {
-      width: 100px;
-      height: 10px;
+      width: clamp(60px, 15vw, 100px);
+      height: clamp(6px, 1.5vw, 10px);
       background: linear-gradient(to right, #1a237e, #4fc3f7, #ffeb3b, #ff9800, #1a237e);
       border-radius: 5px;
       margin-top: 5px;
@@ -207,6 +229,295 @@
       position: relative;
       border-radius: 2px;
       box-shadow: 0 0 5px white;
+    }
+
+    /* Mobil Kontroller */
+    #mobileControls {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      top: 0;
+      pointer-events: none;
+      z-index: 90;
+    }
+
+    #joystickArea {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      width: clamp(100px, 25vw, 150px);
+      height: clamp(100px, 25vw, 150px);
+      pointer-events: auto;
+    }
+
+    #joystickBase {
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.4);
+      position: relative;
+    }
+
+    #joystickThumb {
+      width: 40%;
+      height: 40%;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    #lookArea {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 50%;
+      height: 100%;
+      pointer-events: auto;
+    }
+
+    #actionButtons {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .action-btn {
+      width: clamp(50px, 12vw, 70px);
+      height: clamp(50px, 12vw, 70px);
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.5);
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      font-size: clamp(20px, 5vw, 28px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .action-btn:active {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(0.95);
+    }
+
+    .action-btn.attack {
+      background: rgba(231, 76, 60, 0.6);
+      border-color: #e74c3c;
+    }
+
+    .action-btn.jump {
+      background: rgba(52, 152, 219, 0.6);
+      border-color: #3498db;
+    }
+
+    #topActionButtons {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .small-action-btn {
+      width: clamp(40px, 10vw, 55px);
+      height: clamp(40px, 10vw, 55px);
+      border-radius: 10px;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      font-size: clamp(14px, 3.5vw, 20px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .small-action-btn:active {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    #runButton {
+      position: absolute;
+      bottom: clamp(130px, 30vw, 180px);
+      left: 20px;
+      width: clamp(45px, 11vw, 60px);
+      height: clamp(45px, 11vw, 60px);
+      border-radius: 50%;
+      border: 2px solid rgba(255, 193, 7, 0.6);
+      background: rgba(255, 193, 7, 0.3);
+      color: white;
+      font-size: clamp(10px, 2.5vw, 14px);
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #runButton.active {
+      background: rgba(255, 193, 7, 0.7);
+    }
+
+    #inventoryToggle {
+      display: none;
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 8px 15px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 20px;
+      font-size: 12px;
+      z-index: 101;
+      pointer-events: auto;
+    }
+
+    .mobile-controls-info {
+      display: none;
+    }
+
+    @media (max-width: 768px), (pointer: coarse) {
+      #mobileControls {
+        display: block;
+      }
+      
+      #crosshair {
+        width: 6px;
+        height: 6px;
+      }
+      
+      #inventory {
+        bottom: auto;
+        top: 50%;
+        right: 50%;
+        transform: translate(50%, -50%);
+        display: none;
+        max-height: 60vh;
+        overflow-y: auto;
+      }
+      
+      #inventory.visible {
+        display: block;
+      }
+      
+      #inventoryToggle {
+        display: block;
+      }
+      
+      #ui {
+        top: 5px;
+        left: 5px;
+      }
+      
+      #dayCounter {
+        top: 5px;
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      
+      .mobile-controls-info {
+        display: block;
+        margin-top: 15px;
+        padding: 10px;
+        background: rgba(76, 175, 80, 0.2);
+        border-radius: 8px;
+      }
+      
+      #instructions .controls {
+        display: none;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .bar-container {
+        width: clamp(100px, 35vw, 150px);
+      }
+      
+      #inventory {
+        min-width: 200px;
+        max-width: 85vw;
+      }
+    }
+
+    @media (max-height: 500px) and (orientation: landscape) {
+      #ui {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        max-width: 50%;
+      }
+      
+      .bar-container {
+        width: 100px;
+        margin-bottom: 3px;
+      }
+      
+      .bar {
+        height: 10px;
+      }
+      
+      #dayCounter {
+        top: 5px;
+        right: 5px;
+        left: auto;
+        transform: none;
+        padding: 3px 8px;
+      }
+      
+      #joystickArea {
+        width: 80px;
+        height: 80px;
+        bottom: 10px;
+        left: 10px;
+      }
+      
+      #actionButtons {
+        bottom: 10px;
+        right: 10px;
+        flex-direction: row;
+      }
+      
+      .action-btn {
+        width: 45px;
+        height: 45px;
+      }
+      
+      #topActionButtons {
+        top: 10px;
+        right: 10px;
+        transform: none;
+        flex-direction: row;
+      }
+      
+      .small-action-btn {
+        width: 35px;
+        height: 35px;
+      }
+      
+      #runButton {
+        bottom: 100px;
+        width: 40px;
+        height: 40px;
+      }
     }
   </style>
 </head>
@@ -314,9 +625,42 @@
     <p style="margin-top: 30px;">Başlamak için tıkla</p>
     <p style="font-size: 0.9rem; color: #aaa;">Ormanın karanlığından sakın. Geceleri tehlikeli yaratıklar ortaya
       çıkabilir...</p>
+    <div class="mobile-controls-info">
+      <p style="color: #4CAF50; margin-bottom: 5px;"><strong>📱 Mobil Kontroller:</strong></p>
+      <p style="font-size: 0.85rem;">Sol: Joystick ile hareket</p>
+      <p style="font-size: 0.85rem;">Sağ: Dokunarak bakış açısı</p>
+      <p style="font-size: 0.85rem;">Butonlar: Saldırı, zıplama ve aksiyonlar</p>
+    </div>
   </div>
 
   <div id="message"></div>
+
+  <!-- Mobil Kontroller -->
+  <div id="mobileControls">
+    <div id="joystickArea">
+      <div id="joystickBase">
+        <div id="joystickThumb"></div>
+      </div>
+    </div>
+    
+    <div id="runButton">KOŞU</div>
+    
+    <div id="lookArea"></div>
+    
+    <div id="actionButtons">
+      <button class="action-btn attack" id="attackBtn">⚔️</button>
+      <button class="action-btn jump" id="jumpBtn">⬆️</button>
+    </div>
+    
+    <div id="topActionButtons">
+      <button class="small-action-btn" id="buildHouseBtn">🏠</button>
+      <button class="small-action-btn" id="buildFireBtn">🔥</button>
+      <button class="small-action-btn" id="eatBtn">🍖</button>
+      <button class="small-action-btn" id="flashlightBtn">🔦</button>
+    </div>
+  </div>
+
+  <button id="inventoryToggle">📦 Envanter</button>
 
   <script type="importmap">
 {
@@ -343,6 +687,16 @@
     let day = 1;
     let gameTime = 0; // Oyun süresi (saniye)
 
+    // Mobil kontrol değişkenleri
+    let isMobile = false;
+    let joystickActive = false;
+    let joystickStartPos = { x: 0, y: 0 };
+    let lookTouchId = null;
+    let lookStartPos = { x: 0, y: 0 };
+    let mobileEuler = new THREE.Euler(0, 0, 0, 'YXZ');
+    let mobileYaw = 0;
+    let mobilePitch = 0;
+
     // Sesler
     const hitSound = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=");
     const enemySound = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=");
@@ -355,6 +709,14 @@
     let animals = [];
     let axe, isAttacking = false, attackTime = 0;
 
+    // Mobil cihaz algılama
+    function detectMobile() {
+      return (('ontouchstart' in window) ||
+        (navigator.maxTouchPoints > 0) ||
+        (navigator.msMaxTouchPoints > 0) ||
+        (window.innerWidth <= 768));
+    }
+
     // Initialize game
     init();
     animate();
@@ -362,11 +724,13 @@
     function init() {
       // Sahne
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x87ceeb); // FIX: Initialize background color
-      scene.fog = new THREE.FogExp2(0x87ceeb, 0.001);
+      scene.background = new THREE.Color(0x87ceeb);
+      // Mobilde daha yoğun sis (uzak objeleri gizler, performans artar)
+      scene.fog = new THREE.FogExp2(0x87ceeb, detectMobile() ? 0.0015 : 0.001);
 
-      // Kamera
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      // Kamera - mobilde daha geniş görüş açısı
+      const fov = detectMobile() ? 80 : 75;
+      camera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, 0.1, 1000);
       camera.position.y = 10;
 
       // Işıklar
@@ -377,8 +741,9 @@
       directionalLight.shadow.camera.right = 100;
       directionalLight.shadow.camera.top = 100;
       directionalLight.shadow.camera.bottom = -100;
-      directionalLight.shadow.mapSize.width = 2048;
-      directionalLight.shadow.mapSize.height = 2048;
+      const shadowMapSize = detectMobile() ? 1024 : 2048;
+      directionalLight.shadow.mapSize.width = shadowMapSize;
+      directionalLight.shadow.mapSize.height = shadowMapSize;
       scene.add(directionalLight);
 
       ambientLight = new THREE.AmbientLight(0x404040, 0.5);
@@ -404,11 +769,18 @@
 
       // Oyun başlatma
       document.getElementById('instructions').onclick = () => {
-        controls.lock();
-        document.getElementById('instructions').style.opacity = '0';
-        setTimeout(() => {
-          document.getElementById('instructions').style.display = 'none';
-        }, 500);
+        if (isMobile) {
+          document.getElementById('instructions').style.opacity = '0';
+          setTimeout(() => {
+            document.getElementById('instructions').style.display = 'none';
+          }, 500);
+        } else {
+          controls.lock();
+          document.getElementById('instructions').style.opacity = '0';
+          setTimeout(() => {
+            document.getElementById('instructions').style.display = 'none';
+          }, 500);
+        }
       };
 
       controls.addEventListener("lock", () => {
@@ -419,10 +791,12 @@
       });
 
       controls.addEventListener("unlock", () => {
-        document.getElementById('instructions').style.display = 'flex';
-        setTimeout(() => {
-          document.getElementById('instructions').style.opacity = '1';
-        }, 10);
+        if (!isMobile) {
+          document.getElementById('instructions').style.display = 'flex';
+          setTimeout(() => {
+            document.getElementById('instructions').style.opacity = '1';
+          }, 10);
+        }
       });
 
       scene.add(controls.getObject());
@@ -431,6 +805,19 @@
       document.addEventListener("keydown", onKeyDown);
       document.addEventListener("keyup", onKeyUp);
       document.addEventListener("mousedown", attack);
+
+      // Mobilde varsayılan touch davranışlarını engelle
+      document.body.addEventListener('touchmove', (e) => {
+        if (e.target.closest('#mobileControls') || e.target.closest('#inventoryToggle')) {
+          return;
+        }
+        e.preventDefault();
+      }, { passive: false });
+
+      // Çift tıklama zoom'u engelle
+      document.body.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+      });
 
       // Zemin
       const floorGeometry = new THREE.PlaneGeometry(2000, 2000);
@@ -444,22 +831,36 @@
       floor.receiveShadow = true;
       scene.add(floor);
 
-      // Çevre oluşturma
-      generateTrees(300);
-      generateRocks(100);
-      generateGrass(500);
+      // Çevre oluşturma - mobilde performans için azalt
+      const isMobileDevice = detectMobile();
+      generateTrees(isMobileDevice ? 150 : 300);
+      generateRocks(isMobileDevice ? 50 : 100);
+      generateGrass(isMobileDevice ? 200 : 500);
       generateEnemies(3);
       generateAnimals(5);
 
       // Renderer
-      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer = new THREE.WebGLRenderer({ antialias: !detectMobile() });
       renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.shadowMap.type = detectMobile() ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
       document.body.appendChild(renderer.domElement);
 
       // Pencere boyutu değişikliği
       window.addEventListener('resize', onWindowResize);
+
+      // Mobil kontrolleri başlat
+      isMobile = detectMobile();
+      if (isMobile) {
+        initMobileControls();
+      }
+
+      // Envanter toggle
+      document.getElementById('inventoryToggle').addEventListener('click', () => {
+        const inv = document.getElementById('inventory');
+        inv.classList.toggle('visible');
+      });
     }
 
     function onKeyDown(event) {
@@ -491,6 +892,165 @@
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
+      isMobile = detectMobile();
+    }
+
+    function initMobileControls() {
+      const joystickArea = document.getElementById('joystickArea');
+      const joystickThumb = document.getElementById('joystickThumb');
+      const joystickBase = document.getElementById('joystickBase');
+      const lookArea = document.getElementById('lookArea');
+      const runButton = document.getElementById('runButton');
+      
+      // Joystick kontrolleri
+      joystickArea.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        joystickActive = true;
+        const touch = e.touches[0];
+        const rect = joystickBase.getBoundingClientRect();
+        joystickStartPos.x = rect.left + rect.width / 2;
+        joystickStartPos.y = rect.top + rect.height / 2;
+        updateJoystick(touch.clientX, touch.clientY);
+      }, { passive: false });
+      
+      joystickArea.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (joystickActive) {
+          const touch = e.touches[0];
+          updateJoystick(touch.clientX, touch.clientY);
+        }
+      }, { passive: false });
+      
+      joystickArea.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        joystickActive = false;
+        joystickThumb.style.transform = 'translate(-50%, -50%)';
+        move.f = 0;
+        move.b = 0;
+        move.l = 0;
+        move.r = 0;
+      }, { passive: false });
+      
+      function updateJoystick(touchX, touchY) {
+        const maxDist = joystickBase.offsetWidth / 2;
+        let dx = touchX - joystickStartPos.x;
+        let dy = touchY - joystickStartPos.y;
+        
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > maxDist) {
+          dx = dx / dist * maxDist;
+          dy = dy / dist * maxDist;
+        }
+        
+        joystickThumb.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+        
+        const normalizedX = dx / maxDist;
+        const normalizedY = dy / maxDist;
+        const deadzone = 0.15;
+        
+        if (Math.abs(normalizedY) > deadzone) {
+          move.f = normalizedY < 0 ? -normalizedY : 0;
+          move.b = normalizedY > 0 ? normalizedY : 0;
+        } else {
+          move.f = 0;
+          move.b = 0;
+        }
+        
+        if (Math.abs(normalizedX) > deadzone) {
+          move.r = normalizedX > 0 ? normalizedX : 0;
+          move.l = normalizedX < 0 ? -normalizedX : 0;
+        } else {
+          move.r = 0;
+          move.l = 0;
+        }
+      }
+      
+      // Look kontrolleri
+      lookArea.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (lookTouchId === null) {
+          const touch = e.changedTouches[0];
+          lookTouchId = touch.identifier;
+          lookStartPos.x = touch.clientX;
+          lookStartPos.y = touch.clientY;
+        }
+      }, { passive: false });
+      
+      lookArea.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          const touch = e.changedTouches[i];
+          if (touch.identifier === lookTouchId) {
+            const dx = touch.clientX - lookStartPos.x;
+            const dy = touch.clientY - lookStartPos.y;
+            
+            const sensitivity = 0.003;
+            mobileYaw -= dx * sensitivity;
+            mobilePitch -= dy * sensitivity;
+            mobilePitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, mobilePitch));
+            
+            lookStartPos.x = touch.clientX;
+            lookStartPos.y = touch.clientY;
+          }
+        }
+      }, { passive: false });
+      
+      lookArea.addEventListener('touchend', (e) => {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === lookTouchId) {
+            lookTouchId = null;
+          }
+        }
+      }, { passive: false });
+      
+      // Koşu butonu
+      runButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        isRunning = true;
+        runButton.classList.add('active');
+      }, { passive: false });
+      
+      runButton.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        isRunning = false;
+        runButton.classList.remove('active');
+      }, { passive: false });
+      
+      // Saldırı butonu
+      document.getElementById('attackBtn').addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        attack({ button: 0 });
+      }, { passive: false });
+      
+      // Zıplama butonu
+      document.getElementById('jumpBtn').addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (canJump) {
+          velocity.y = 15;
+          canJump = false;
+        }
+      }, { passive: false });
+      
+      // Aksiyon butonları
+      document.getElementById('buildHouseBtn').addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        buildHouse();
+      }, { passive: false });
+      
+      document.getElementById('buildFireBtn').addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        buildFire();
+      }, { passive: false });
+      
+      document.getElementById('eatBtn').addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        eatMeat();
+      }, { passive: false });
+      
+      document.getElementById('flashlightBtn').addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        toggleFlashlight();
+      }, { passive: false });
     }
 
     function generateTrees(count) {
@@ -889,8 +1449,10 @@
         damageText.style.position = 'absolute';
         damageText.style.color = '#ff0000';
         damageText.style.fontWeight = 'bold';
-        damageText.style.fontSize = '20px';
+        damageText.style.fontSize = isMobile ? '16px' : '20px';
         damageText.style.pointerEvents = 'none';
+        damageText.style.zIndex = '200';
+        damageText.style.textShadow = '1px 1px 2px black';
         document.body.appendChild(damageText);
 
         // Ekranda hasar göstergesi pozisyonu
@@ -1122,8 +1684,10 @@
       message.style.color = color;
       message.style.borderColor = color;
       message.style.display = 'block';
+      message.style.opacity = '0';
 
       setTimeout(() => {
+        message.style.transition = 'opacity 0.3s ease';
         message.style.opacity = '1';
       }, 10);
 
@@ -1131,7 +1695,7 @@
         message.style.opacity = '0';
         setTimeout(() => {
           message.style.display = 'none';
-        }, 500);
+        }, 300);
       }, 2000);
     }
 
@@ -1286,7 +1850,9 @@
       velocity.z -= velocity.z * 5.0 * delta;
       velocity.y -= 9.8 * 50.0 * delta;
 
-      const moveSpeed = isRunning && stamina > 0 ? 600 : 400;
+      const baseSpeed = isMobile ? 500 : 400;
+      const runMultiplier = isMobile ? 1.4 : 1.5;
+      const moveSpeed = isRunning && stamina > 0 ? baseSpeed * runMultiplier : baseSpeed;
       const dir = new THREE.Vector3(move.r - move.l, 0, move.f - move.b);
 
       if (dir.length() > 0) dir.normalize();
@@ -1305,6 +1871,12 @@
 
       controls.moveRight(velocity.x * delta);
       controls.moveForward(velocity.z * delta);
+
+      // Mobil kamera rotasyonu
+      if (isMobile) {
+        mobileEuler.set(mobilePitch, mobileYaw, 0, 'YXZ');
+        camera.quaternion.setFromEuler(mobileEuler);
+      }
 
       controls.getObject().position.y += velocity.y * delta;
 
